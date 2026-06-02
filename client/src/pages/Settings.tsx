@@ -25,18 +25,16 @@ const Settings: React.FC = () => {
         gym_address: 'Av. Siempre Viva 123',
         gym_logo_url: ''
     });
+    const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [licenseStatus, setLicenseStatus] = useState<any>(null);
 
     const fetchLicenseStatus = async () => {
         try {
-            setLicenseLoading(true);
             const response = await api.get('/settings/license');
             setLicenseStatus(response.data);
         } catch (error) {
             console.error('Error fetching license:', error);
-        } finally {
-            setLicenseLoading(false);
         }
     };
 
@@ -57,14 +55,11 @@ const Settings: React.FC = () => {
 
     const fetchUsers = async () => {
         if (currentUser?.role !== 'SUPERADMIN' && currentUser?.role !== 'ADMIN') return;
-        setLoading(true);
         try {
             const response = await api.get('/users');
             setUsers(response.data);
         } catch (error) {
             console.error('Error fetching users:', error);
-        } finally {
-            setLoading(false);
         }
     };
 

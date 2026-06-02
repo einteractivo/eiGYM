@@ -1,10 +1,397 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model Gym {
+  id                      Int                 @id @default(autoincrement())
+  name                    String
+  slug                    String              @unique(map: "Gym_slug_key")
+  logoUrl                 String?
+  address                 String?
+  phone                   String?
+  email                   String?
+  active                  Boolean             @default(true)
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  subscriptionExpiresAt   DateTime?
+  subscriptionPlan        String              @default("TRIAL")
+  subscriptionAmount      Decimal?            @db.Decimal(10, 2)
+  subscriptionDescription String?             @db.Text
+  cashSessions            CashSession[]
+  equipment               Equipment[]
+  gymClasses              GymClass[]
+  members                 Member[]
+  payments                Payment[]
+  plans                   Plan[]
+  products                Product[]
+  sales                   Sale[]
+  settings                Setting[]
+  specialClasses          SpecialClass[]
+  trainerAttendances      TrainerAttendance[]
+  users                   User[]
+
+  @@map("gym")
+}
+
+model User {
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  email              String              @unique(map: "User_email_key")
+  password           String
+  role               Role                @default(RECEPTION)
+  notes              String?             @db.LongText
+  gymId              Int?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  cashSessions       CashSession[]
+  schedules          Schedule[]
+  trainerAttendances TrainerAttendance[]
+  gym                Gym?                @relation(fields: [gymId], references: [id], map: "User_gymId_fkey")
+
+  @@index([gymId], map: "User_gymId_fkey")
+  @@map("user")
+}
+
+model CashSession {
+  id             Int               @id @default(autoincrement())
+  userId         Int
+  gymId          Int
+  openedAt       DateTime          @default(now())
+  closedAt       DateTime?
+  initialAmount  Decimal           @db.Decimal(10, 2)
+  finalAmount    Decimal?          @db.Decimal(10, 2)
+  expectedAmount Decimal?          @db.Decimal(10, 2)
+  status         String            @default("OPEN")
+  notes          String?
+  gym            Gym               @relation(fields: [gymId], references: [id], map: "CashSession_gymId_fkey")
+  user           User              @relation(fields: [userId], references: [id], map: "CashSession_userId_fkey")
+  transactions   CashTransaction[]
+  payments       Payment[]
+
+  @@index([gymId], map: "CashSession_gymId_idx")
+  @@index([userId], map: "CashSession_userId_idx")
+  @@map("cashsession")
+}
+
+model CashTransaction {
+  id          Int         @id @default(autoincrement())
+  sessionId   Int
+  amount      Decimal     @db.Decimal(10, 2)
+  type        String
+  category    String
+  description String?
+  status      String      @default("COMPLETED")
+  createdAt   DateTime    @default(now())
+  method      String?     @default("CASH")
+  session     CashSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, map: "CashTransaction_sessionId_fkey")
+
+  @@index([sessionId], map: "CashTransaction_sessionId_idx")
+  @@map("cashtransaction")
+}
+
+model GymClass {
+  id          Int        @id @default(autoincrement())
+  gymId       Int
+  name        String
+  description String?
+  color       String?
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  gym         Gym        @relation(fields: [gymId], references: [id], map: "GymClass_gymId_fkey")
+  schedules   Schedule[]
+
+  @@index([gymId], map: "GymClass_gymId_idx")
+  @@map("gymclass")
+}
+
+model Schedule {
+  id                 Int                 @id @default(autoincrement())
+  classId            Int
+  trainerId          Int
+  dayOfWeek          Int
+  startTime          String
+  endTime            String
+  capacity           Int                 @default(20)
+  active             Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  attendances        Attendance[]
+  gymClass           GymClass            @relation(fields: [classId], references: [id], onDelete: Cascade, map: "Schedule_classId_fkey")
+  trainer            User                @relation(fields: [trainerId], references: [id], map: "Schedule_trainerId_fkey")
+  trainerAttendances TrainerAttendance[]
+
+  @@index([classId], map: "Schedule_classId_fkey")
+  @@index([trainerId], map: "Schedule_trainerId_fkey")
+  @@map("schedule")
+}
+
+model Plan {
+  id           Int          @id @default(autoincrement())
+  gymId        Int
+  name         String
+  durationDays Int          @default(30)
+  price        Decimal      @db.Decimal(10, 2)
+  description  String?
+  active       Boolean      @default(true)
+  memberships  Membership[]
+  gym          Gym          @relation(fields: [gymId], references: [id], map: "Plan_gymId_fkey")
+
+  @@index([gymId], map: "Plan_gymId_idx")
+  @@map("plan")
+}
+
+model Member {
+  id                        Int                        @id @default(autoincrement())
+  gymId                     Int
+  firstName                 String
+  lastName                  String
+  dni                       String
+  phone                     String?
+  email                     String?
+  birthday                  DateTime?
+  address                   String?
+  photoUrl                  String?                    @db.LongText
+  fingerprintId             String?
+  qrCode                    String?
+  status                    MemberStatus               @default(ACTIVE)
+  registrationDate          DateTime                   @default(now())
+  notes                     String?                    @db.LongText
+  attendances               Attendance[]
+  gym                       Gym                        @relation(fields: [gymId], references: [id], map: "Member_gymId_fkey")
+  memberships               Membership[]
+  payments                  Payment[]
+  sales                     Sale[]
+  specialClassRegistrations SpecialClassRegistration[]
+
+  @@unique([gymId, dni], map: "Member_gymId_dni_key")
+  @@unique([gymId, fingerprintId], map: "Member_gymId_fingerprintId_key")
+  @@unique([gymId, qrCode], map: "Member_gymId_qrCode_key")
+  @@index([gymId], map: "Member_gymId_idx")
+  @@map("member")
+}
+
+model Membership {
+  id        Int       @id @default(autoincrement())
+  memberId  Int
+  planId    Int
+  startDate DateTime
+  endDate   DateTime
+  status    String    @default("ACTIVE")
+  price     Decimal   @db.Decimal(10, 2)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  member    Member    @relation(fields: [memberId], references: [id], onDelete: Cascade, map: "Membership_memberId_fkey")
+  plan      Plan      @relation(fields: [planId], references: [id], map: "Membership_planId_fkey")
+  payments  Payment[]
+
+  @@index([memberId], map: "Membership_memberId_fkey")
+  @@index([planId], map: "Membership_planId_fkey")
+  @@map("membership")
+}
+
+model Attendance {
+  id            Int       @id @default(autoincrement())
+  memberId      Int
+  date          DateTime  @default(now())
+  method        String
+  accessAllowed Boolean   @default(true)
+  scheduleId    Int?
+  member        Member    @relation(fields: [memberId], references: [id], onDelete: Cascade, map: "Attendance_memberId_fkey")
+  schedule      Schedule? @relation(fields: [scheduleId], references: [id], map: "Attendance_scheduleId_fkey")
+
+  @@index([memberId], map: "Attendance_memberId_fkey")
+  @@index([scheduleId], map: "Attendance_scheduleId_fkey")
+  @@map("attendance")
+}
+
+model Payment {
+  id                         Int                       @id @default(autoincrement())
+  gymId                      Int
+  memberId                   Int?
+  membershipId               Int?
+  saleId                     Int?
+  specialClassRegistrationId Int?
+  amount                     Decimal                   @db.Decimal(10, 2)
+  method                     PaymentMethod
+  type                       String
+  date                       DateTime                  @default(now())
+  status                     String                    @default("COMPLETED")
+  notes                      String?
+  cashSessionId              Int?
+  cashSession                CashSession?              @relation(fields: [cashSessionId], references: [id], map: "Payment_cashSessionId_fkey")
+  gym                        Gym                       @relation(fields: [gymId], references: [id], map: "Payment_gymId_fkey")
+  member                     Member?                   @relation(fields: [memberId], references: [id], onDelete: Cascade, map: "Payment_memberId_fkey")
+  membership                 Membership?               @relation(fields: [membershipId], references: [id], map: "Payment_membershipId_fkey")
+  sale                       Sale?                     @relation(fields: [saleId], references: [id], map: "Payment_saleId_fkey")
+  specialClassRegistration   SpecialClassRegistration? @relation(fields: [specialClassRegistrationId], references: [id], map: "Payment_specialClassRegistrationId_fkey")
+
+  @@index([cashSessionId], map: "Payment_cashSessionId_fkey")
+  @@index([gymId], map: "Payment_gymId_idx")
+  @@index([memberId], map: "Payment_memberId_fkey")
+  @@index([membershipId], map: "Payment_membershipId_fkey")
+  @@index([saleId], map: "Payment_saleId_fkey")
+  @@index([specialClassRegistrationId], map: "Payment_specialClassRegistrationId_fkey")
+  @@map("payment")
+}
+
+model Product {
+  id          Int        @id @default(autoincrement())
+  gymId       Int
+  name        String
+  description String?
+  costPrice   Decimal    @default(0.00) @db.Decimal(10, 2)
+  price       Decimal    @db.Decimal(10, 2)
+  stock       Int        @default(0)
+  photoUrl    String?
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  gym         Gym        @relation(fields: [gymId], references: [id], map: "Product_gymId_fkey")
+  saleItems   SaleItem[]
+
+  @@index([gymId], map: "Product_gymId_idx")
+  @@map("product")
+}
+
+model Sale {
+  id       Int        @id @default(autoincrement())
+  gymId    Int
+  memberId Int?
+  total    Decimal    @db.Decimal(10, 2)
+  date     DateTime   @default(now())
+  payments Payment[]
+  gym      Gym        @relation(fields: [gymId], references: [id], map: "Sale_gymId_fkey")
+  member   Member?    @relation(fields: [memberId], references: [id], map: "Sale_memberId_fkey")
+  items    SaleItem[]
+
+  @@index([gymId], map: "Sale_gymId_idx")
+  @@index([memberId], map: "Sale_memberId_fkey")
+  @@map("sale")
+}
+
+model SaleItem {
+  id          Int     @id @default(autoincrement())
+  saleId      Int
+  productId   Int
+  quantity    Int
+  priceAtSale Decimal @db.Decimal(10, 2)
+  product     Product @relation(fields: [productId], references: [id], map: "SaleItem_productId_fkey")
+  sale        Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade, map: "SaleItem_saleId_fkey")
+
+  @@index([productId], map: "SaleItem_productId_fkey")
+  @@index([saleId], map: "SaleItem_saleId_fkey")
+  @@map("saleitem")
+}
+
+model Equipment {
+  id              Int       @id @default(autoincrement())
+  gymId           Int
+  name            String
+  description     String?
+  status          String    @default("OPERATIONAL")
+  location        String?
+  purchaseDate    DateTime?
+  lastMaintenance DateTime?
+  photoUrl        String?   @db.LongText
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  gym             Gym       @relation(fields: [gymId], references: [id], map: "Equipment_gymId_fkey")
+
+  @@index([gymId], map: "Equipment_gymId_idx")
+  @@map("equipment")
+}
+
+model Setting {
+  id    Int    @id @default(autoincrement())
+  gymId Int?
+  key   String
+  value String @db.LongText
+  gym   Gym?   @relation(fields: [gymId], references: [id], map: "Setting_gymId_fkey")
+
+  @@unique([gymId, key], map: "Setting_gymId_key_key")
+  @@index([gymId], map: "Setting_gymId_idx")
+  @@map("setting")
+}
+
+model SpecialClass {
+  id            Int                        @id @default(autoincrement())
+  gymId         Int
+  name          String
+  description   String?
+  price         Decimal                    @db.Decimal(10, 2)
+  memberPrice   Decimal                    @default(0.00) @db.Decimal(10, 2)
+  schedule      String?
+  dayOfWeek     Int?
+  startTime     String?
+  endTime       String?
+  capacity      Int?
+  color         String?
+  active        Boolean                    @default(true)
+  createdAt     DateTime                   @default(now())
+  updatedAt     DateTime                   @updatedAt
+  gym           Gym                        @relation(fields: [gymId], references: [id], map: "SpecialClass_gymId_fkey")
+  registrations SpecialClassRegistration[]
+
+  @@index([gymId], map: "SpecialClass_gymId_idx")
+  @@map("specialclass")
+}
+
+model SpecialClassRegistration {
+  id               Int          @id @default(autoincrement())
+  specialClassId   Int
+  memberId         Int
+  registrationDate DateTime     @default(now())
+  status           String       @default("ACTIVE")
+  payments         Payment[]
+  member           Member       @relation(fields: [memberId], references: [id], onDelete: Cascade, map: "SpecialClassRegistration_memberId_fkey")
+  specialClass     SpecialClass @relation(fields: [specialClassId], references: [id], onDelete: Cascade, map: "SpecialClassRegistration_specialClassId_fkey")
+
+  @@unique([specialClassId, memberId], map: "SpecialClassRegistration_specialClassId_memberId_key")
+  @@index([memberId], map: "SpecialClassRegistration_memberId_fkey")
+  @@map("specialclassregistration")
+}
+
+model GymRegistration {
+  id          Int      @id @default(autoincrement())
+  gymName     String
+  contactName String
+  email       String
+  phone       String
+  address     String?
+  notes       String?  @db.LongText
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  password    String?
+
+  @@map("gymregistration")
+}
+
+model TrainerAttendance {
+  id         Int       @id @default(autoincrement())
+  trainerId  Int
+  gymId      Int
+  scheduleId Int?
+  checkIn    DateTime  @default(now())
+  checkOut   DateTime?
+  status     String    @default("PRESENT")
+  notes      String?
+  gym        Gym       @relation(fields: [gymId], references: [id], map: "TrainerAttendance_gymId_fkey")
+  schedule   Schedule? @relation(fields: [scheduleId], references: [id], map: "TrainerAttendance_scheduleId_fkey")
+  trainer    User      @relation(fields: [trainerId], references: [id], map: "TrainerAttendance_trainerId_fkey")
+
+  @@index([gymId], map: "TrainerAttendance_gymId_idx")
+  @@index([scheduleId], map: "TrainerAttendance_scheduleId_idx")
+  @@index([trainerId], map: "TrainerAttendance_trainerId_idx")
+  @@map("trainerattendance")
 }
 
 enum Role {
@@ -26,206 +413,4 @@ enum PaymentMethod {
   TRANSFER
   YAPE
   PLIN
-}
-
-model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(RECEPTION)
-  notes     String?  @db.LongText
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  schedules Schedule[] // Schedules assigned to this trainer
-  cashSessions CashSession[]
-}
-
-model CashSession {
-  id              Int               @id @default(autoincrement())
-  userId          Int
-  openedAt        DateTime          @default(now())
-  closedAt        DateTime?
-  initialAmount   Decimal           @db.Decimal(10, 2)
-  finalAmount     Decimal?          @db.Decimal(10, 2)
-  expectedAmount  Decimal?          @db.Decimal(10, 2)
-  status          String            @default("OPEN") // OPEN, CLOSED
-  notes           String?
-  
-  user            User              @relation(fields: [userId], references: [id])
-  transactions    CashTransaction[]
-  payments        Payment[]
-
-  @@index([userId])
-}
-
-model CashTransaction {
-  id          Int         @id @default(autoincrement())
-  sessionId   Int
-  amount      Decimal     @db.Decimal(10, 2)
-  type        String      // INCOME, EXPENSE
-  category    String      // SUELDOS, SERVICIOS, ALQUILER, COMPRAS, MANTENIMIENTO, OTROS
-  description String?
-  status      String      @default("COMPLETED") // COMPLETED, VOIDED
-  createdAt   DateTime    @default(now())
-
-  session     CashSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@index([sessionId])
-}
-
-model GymClass {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String?
-  active      Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  schedules   Schedule[]
-}
-
-model Schedule {
-  id          Int       @id @default(autoincrement())
-  classId     Int
-  trainerId   Int
-  dayOfWeek   Int       // 0-6 (Sunday-Saturday)
-  startTime   String    // HH:mm
-  endTime     String    // HH:mm
-  capacity    Int       @default(20)
-  active      Boolean   @default(true)
-  
-  gymClass    GymClass  @relation(fields: [classId], references: [id], onDelete: Cascade)
-  trainer     User      @relation(fields: [trainerId], references: [id])
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-model Plan {
-  id          Int          @id @default(autoincrement())
-  name        String
-  durationDays Int          @default(30) // Duration in days
-  price       Decimal      @db.Decimal(10, 2)
-  description String?
-  memberships Membership[]
-  active      Boolean      @default(true)
-}
-
-model Member {
-  id              Int           @id @default(autoincrement())
-  firstName       String
-  lastName        String
-  dni             String        @unique
-  phone           String?
-  email           String?
-  birthday        DateTime?
-  address         String?
-  photoUrl        String?       @db.LongText
-  fingerprintId   String?       @unique // ID stored in localized biometric sensor
-  qrCode          String?       @unique
-  status          MemberStatus  @default(ACTIVE)
-  registrationDate DateTime     @default(now())
-  
-  memberships     Membership[]
-  attendances     Attendance[]
-  payments        Payment[]
-  sales           Sale[]
-}
-
-model Membership {
-  id        Int       @id @default(autoincrement())
-  memberId  Int
-  planId    Int
-  startDate DateTime
-  endDate   DateTime
-  status    String    @default("ACTIVE") // ACTIVE, EXPIRED, PAUSED
-  price     Decimal   @db.Decimal(10, 2)
-  
-  member    Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  plan      Plan      @relation(fields: [planId], references: [id])
-  payments  Payment[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model Attendance {
-  id        Int      @id @default(autoincrement())
-  memberId  Int
-  date      DateTime @default(now())
-  method    String   // FINGERPRINT, QR, MANUAL
-  accessAllowed Boolean @default(true)
-  notes     String?
-
-  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-}
-
-model Payment {
-  id            Int           @id @default(autoincrement())
-  memberId      Int?
-  membershipId  Int?
-  saleId        Int?
-  amount        Decimal       @db.Decimal(10, 2)
-  method        PaymentMethod
-  type          String        // MEMBERSHIP, PRODUCT, OTHER
-  date          DateTime      @default(now())
-  status        String        @default("COMPLETED") // COMPLETED, VOIDED
-  notes         String?
-  cashSessionId Int?
-
-  member        Member?       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  membership    Membership?   @relation(fields: [membershipId], references: [id])
-  sale          Sale?         @relation(fields: [saleId], references: [id])
-  cashSession   CashSession?  @relation(fields: [cashSessionId], references: [id])
-}
-
-model Product {
-  id          Int        @id @default(autoincrement())
-  name        String
-  description String?
-  price       Decimal    @db.Decimal(10, 2)
-  stock       Int        @default(0)
-  photoUrl    String?
-  active      Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  saleItems   SaleItem[]
-}
-
-model Sale {
-  id          Int        @id @default(autoincrement())
-  memberId    Int?
-  total       Decimal    @db.Decimal(10, 2)
-  date        DateTime   @default(now())
-  
-  member      Member?    @relation(fields: [memberId], references: [id])
-  items       SaleItem[]
-  payments    Payment[]
-}
-
-model SaleItem {
-  id          Int      @id @default(autoincrement())
-  saleId      Int
-  productId   Int
-  quantity    Int
-  priceAtSale Decimal  @db.Decimal(10, 2)
-  
-  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product     Product  @relation(fields: [productId], references: [id])
-}
-
-model Equipment {
-  id              Int      @id @default(autoincrement())
-  name            String
-  description     String?
-  status          String   @default("OPERATIONAL") // OPERATIONAL, MAINTENANCE, OUT_OF_SERVICE
-  location        String?
-  purchaseDate    DateTime?
-  lastMaintenance DateTime?
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
 }

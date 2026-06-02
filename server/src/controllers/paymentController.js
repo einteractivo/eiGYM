@@ -1,13 +1,16 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+const prisma = require('../utils/prisma');
 
 exports.createPayment = async (req, res) => {
     try {
+        if (!req.user.gymId) {
+            return res.status(400).json({ error: 'Usuario no pertenece a un gimnasio válido.' });
+        }
         const { memberId, membershipId, amount, method, type, notes } = req.body;
 
         // Check if there is an open cash session to link this payment
         const openSession = await prisma.cashSession.findFirst({
-            where: { status: 'OPEN' }
+            where: { status: 'OPEN', gymId: req.user.gymId }
         });
 
         const payment = await prisma.payment.create({
@@ -18,7 +21,8 @@ exports.createPayment = async (req, res) => {
                 method,
                 type,
                 notes,
-                cashSessionId: openSession ? openSession.id : null
+                cashSessionId: openSession ? openSession.id : null,
+                gymId: req.user.gymId
             }
         });
 
@@ -32,6 +36,7 @@ exports.createPayment = async (req, res) => {
 exports.getAllPayments = async (req, res) => {
     try {
         const payments = await prisma.payment.findMany({
+            where: req.user.gymId ? { gymId: req.user.gymId } : {},
             include: { member: true, membership: { include: { plan: true } } },
             orderBy: { date: 'desc' }
         });
@@ -45,6 +50,12 @@ exports.voidPayment = async (req, res) => {
     try {
         const { notes } = req.body;
         const paymentId = parseInt(req.params.id);
+
+        const existing = await prisma.payment.findUnique({ where: { id: paymentId } });
+        if (!existing) return res.status(404).json({ message: 'Pago no encontrado' });
+        if (req.user.gymId && existing.gymId !== req.user.gymId) {
+            return res.status(403).json({ message: 'No autorizado' });
+        }
 
         const payment = await prisma.payment.update({
             where: { id: paymentId },
@@ -65,6 +76,12 @@ exports.deletePayment = async (req, res) => {
     try {
         const paymentId = parseInt(req.params.id);
 
+        const existing = await prisma.payment.findUnique({ where: { id: paymentId } });
+        if (!existing) return res.status(404).json({ message: 'Pago no encontrado' });
+        if (req.user.gymId && existing.gymId !== req.user.gymId) {
+            return res.status(403).json({ message: 'No autorizado' });
+        }
+
         await prisma.payment.delete({
             where: { id: paymentId }
         });
@@ -75,3 +92,4 @@ exports.deletePayment = async (req, res) => {
         res.status(500).json({ message: 'Error al eliminar el pago' });
     }
 };
+

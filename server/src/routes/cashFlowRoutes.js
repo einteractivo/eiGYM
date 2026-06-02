@@ -13,6 +13,7 @@ router.put('/transaction/void/:id', authorize(['ADMIN']), cashFlowController.voi
 router.delete('/transaction/:id', authorize(['ADMIN']), cashFlowController.deleteTransaction);
 router.get('/transactions', cashFlowController.getAllTransactions);
 router.get('/history', authorize(['ADMIN']), cashFlowController.getHistory);
+router.delete('/reset', authorize(['SUPERADMIN']), cashFlowController.resetCashFlow);
 router.get('/:id', cashFlowController.getSessionDetails);
 
 module.exports = router;

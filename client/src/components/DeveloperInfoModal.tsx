@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Globe, MessageCircle, Code2, Heart } from 'lucide-react';
+import { X, Globe, MessageCircle, Heart } from 'lucide-react';
 
 interface DeveloperInfoModalProps {
     isOpen: boolean;
@@ -17,7 +17,11 @@ const DeveloperInfoModal: React.FC<DeveloperInfoModalProps> = ({ isOpen, onClose
                     <div className="absolute inset-0 opacity-20">
                         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
                     </div>
-                    <Code2 size={48} className="text-white relative z-10" />
+                    <img 
+                        src="/dev-logo.png" 
+                        alt="EInteractivo Logo" 
+                        className="h-20 w-auto relative z-10" 
+                    />
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 text-white/50 hover:text-white mt-1 transition-colors p-2 hover:bg-white/10 rounded-full"
@@ -29,7 +33,7 @@ const DeveloperInfoModal: React.FC<DeveloperInfoModalProps> = ({ isOpen, onClose
                 <div className="p-8 text-center space-y-6">
                     <div>
                         <h2 className="text-2xl font-bold text-white tracking-tight">eiGYM System</h2>
-                        <p className="text-gym-primary font-bold uppercase tracking-widest text-xs mt-1">Versión 1.0.2</p>
+                        <p className="text-gym-primary font-bold uppercase tracking-widest text-xs mt-1">Versión 2.0.0</p>
                     </div>
 
                     <div className="space-y-4 text-gray-400">

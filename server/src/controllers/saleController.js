@@ -1,10 +1,18 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+const prisma = require('../utils/prisma');
 
 exports.createSale = async (req, res) => {
     const { memberId, items, paymentMethod, total, notes } = req.body;
 
     try {
+        if (!req.user.gymId) {
+            return res.status(400).json({ error: 'Usuario no pertenece a un gimnasio válido.' });
+        }
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'La venta debe incluir al menos un producto (items)' });
+        }
+
         // Use a transaction to ensure everything succeeds or fails together
         const result = await prisma.$transaction(async (tx) => {
             // 1. Create the Sale
@@ -12,6 +20,7 @@ exports.createSale = async (req, res) => {
                 data: {
                     memberId: memberId ? parseInt(memberId) : null,
                     total: parseFloat(total),
+                    gymId: req.user.gymId,
                     items: {
                         create: items.map(item => ({
                             productId: item.productId,
@@ -28,8 +37,11 @@ exports.createSale = async (req, res) => {
 
             // 2. Create the Payment
             const openSession = await tx.cashSession.findFirst({
-                where: { status: 'OPEN' }
+                where: { status: 'OPEN', gymId: req.user.gymId }
             });
+
+            // Construct detail string for products
+            const productDetails = sale.items.map(item => `${item.product.name} (x${item.quantity})`).join(', ');
 
             await tx.payment.create({
                 data: {
@@ -38,8 +50,9 @@ exports.createSale = async (req, res) => {
                     amount: parseFloat(total),
                     method: paymentMethod,
                     type: 'PRODUCT',
-                    notes: notes || `Venta de productos - Ticket #${sale.id}`,
-                    cashSessionId: openSession ? openSession.id : null
+                    notes: notes || `Venta: ${productDetails} - Ticket #${sale.id}`,
+                    cashSessionId: openSession ? openSession.id : null,
+                    gymId: req.user.gymId
                 }
             });
 
@@ -67,8 +80,11 @@ exports.createSale = async (req, res) => {
 
 exports.getSaleById = async (req, res) => {
     try {
-        const sale = await prisma.sale.findUnique({
-            where: { id: parseInt(req.params.id) },
+        const sale = await prisma.sale.findFirst({
+            where: { 
+                id: parseInt(req.params.id),
+                ...(req.user.gymId ? { gymId: req.user.gymId } : {})
+            },
             include: {
                 member: true,
                 items: { include: { product: true } },
@@ -86,6 +102,7 @@ exports.getSaleById = async (req, res) => {
 exports.getAllSales = async (req, res) => {
     try {
         const sales = await prisma.sale.findMany({
+            where: req.user.gymId ? { gymId: req.user.gymId } : {},
             include: {
                 member: true,
                 items: { include: { product: true } }
@@ -98,3 +115,4 @@ exports.getAllSales = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener histórico de ventas' });
     }
 };
+

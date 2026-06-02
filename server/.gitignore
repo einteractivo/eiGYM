@@ -1,5 +1,9 @@
-node_modules
-# Keep environment variables out of version control
+node_modules/
 .env
-
-/generated/prisma
+.env.development
+.env.production
+uploads/
+prisma_engines_library.zip
+scratch/
+*.log
+*.bak

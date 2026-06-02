@@ -1,12 +1,24 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+const prisma = require('../utils/prisma');
 
 exports.createMembership = async (req, res) => {
     try {
         const { memberId, planId, startDate } = req.body;
+        const gymId = req.user?.gymId;
 
-        const plan = await prisma.plan.findUnique({ where: { id: parseInt(planId) } });
-        if (!plan) return res.status(404).json({ message: 'Plan not found' });
+        if (!gymId) {
+            return res.status(400).json({ error: 'Operación no permitida. Gimnasio no detectado.' });
+        }
+
+        const plan = await prisma.plan.findFirst({ 
+            where: { id: parseInt(planId), gymId } 
+        });
+        if (!plan) return res.status(404).json({ message: 'Plan no encontrado o no pertenece a tu gimnasio' });
+
+        const member = await prisma.member.findFirst({
+            where: { id: parseInt(memberId), gymId }
+        });
+        if (!member) return res.status(404).json({ message: 'Miembro no encontrado o no pertenece a tu gimnasio' });
 
         const start = new Date(startDate || new Date());
         const end = new Date(start);
@@ -32,8 +44,11 @@ exports.createMembership = async (req, res) => {
 
 exports.getMembershipById = async (req, res) => {
     try {
-        const membership = await prisma.membership.findUnique({
-            where: { id: parseInt(req.params.id) },
+        const membership = await prisma.membership.findFirst({
+            where: { 
+                id: parseInt(req.params.id),
+                ...(req.user?.gymId ? { member: { gymId: req.user.gymId } } : {})
+            },
             include: { member: true, plan: true, payments: true }
         });
         if (!membership) return res.status(404).json({ message: 'Membership not found' });
@@ -46,6 +61,17 @@ exports.getMembershipById = async (req, res) => {
 
 exports.cancelMembership = async (req, res) => {
     try {
+        const membership = await prisma.membership.findFirst({
+            where: {
+                id: parseInt(req.params.id),
+                ...(req.user?.gymId ? { member: { gymId: req.user.gymId } } : {})
+            }
+        });
+
+        if (!membership) {
+            return res.status(404).json({ message: 'Membresía no encontrada o no tienes permiso' });
+        }
+
         await prisma.membership.update({
             where: { id: parseInt(req.params.id) },
             data: { status: 'CANCELLED' }
@@ -56,3 +82,4 @@ exports.cancelMembership = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+

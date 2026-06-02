@@ -7,6 +7,7 @@ export interface CashTransaction {
     type: 'INCOME' | 'EXPENSE';
     category: string;
     description?: string;
+    method?: string;
     status: 'COMPLETED' | 'VOIDED';
     createdAt: string;
 }
@@ -54,6 +55,7 @@ const CashFlowService = {
         type: 'INCOME' | 'EXPENSE';
         category: string;
         description?: string;
+        method?: string;
     }) => {
         const response = await api.post<CashTransaction>('/cash-flow/transaction', data);
         return response.data;
@@ -83,6 +85,10 @@ const CashFlowService = {
 
     deleteTransaction: async (id: number) => {
         const response = await api.delete<{ message: string }>(`/cash-flow/transaction/${id}`);
+        return response.data;
+    },
+    resetCashFlow: async () => {
+        const response = await api.delete<{ message: string }>('/cash-flow/reset');
         return response.data;
     }
 };

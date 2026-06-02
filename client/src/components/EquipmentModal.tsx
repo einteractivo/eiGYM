@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, Dumbbell } from 'lucide-react';
 import EquipmentService, { type Equipment } from '../services/EquipmentService';
 
 interface EquipmentModalProps {
@@ -18,6 +18,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({ isOpen, onClose, onSucc
         purchaseDate: string;
         lastMaintenance: string;
         notes: string;
+        photoUrl: string;
     }>({
         name: '',
         description: '',
@@ -25,7 +26,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({ isOpen, onClose, onSucc
         location: '',
         purchaseDate: '',
         lastMaintenance: '',
-        notes: ''
+        notes: '',
+        photoUrl: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({ isOpen, onClose, onSucc
                 location: equipment.location || '',
                 purchaseDate: equipment.purchaseDate ? equipment.purchaseDate.split('T')[0] : '',
                 lastMaintenance: equipment.lastMaintenance ? equipment.lastMaintenance.split('T')[0] : '',
-                notes: equipment.notes || ''
+                notes: equipment.notes || '',
+                photoUrl: equipment.photoUrl || ''
             });
         } else {
             setFormData({
@@ -49,7 +52,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({ isOpen, onClose, onSucc
                 location: '',
                 purchaseDate: '',
                 lastMaintenance: '',
-                notes: ''
+                notes: '',
+                photoUrl: ''
             });
         }
     }, [equipment, isOpen]);
@@ -83,135 +87,169 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({ isOpen, onClose, onSucc
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-gym-dark border border-white/10 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
-                    <h2 className="text-xl font-bold text-white">
-                        {equipment ? 'Editar Equipo' : 'Nuevo Equipo'}
-                    </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-[3rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
+                <div className="flex justify-between items-center p-10 border-b border-gray-50 bg-white">
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-gym-primary/10 rounded-2xl flex items-center justify-center">
+                            <Dumbbell className="w-8 h-8 text-gym-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">
+                                {equipment ? 'Editar Equipo' : 'Nuevo Equipo'}
+                            </h2>
+                            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest italic mt-0.5">Registro Técnico y Seguimiento</p>
+                        </div>
+                    </div>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
+                        className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-gray-100 transition-all rounded-full"
                     >
-                        <X size={20} />
+                        <X size={24} strokeWidth={2.5} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                <form onSubmit={handleSubmit} className="p-10 space-y-8 max-h-[80vh] overflow-y-auto custom-scrollbar">
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-xl flex items-center gap-2">
-                            <AlertCircle size={20} />
-                            <span>{error}</span>
+                        <div className="bg-red-50 border border-red-100 text-red-600 px-6 py-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                            <AlertCircle size={20} strokeWidth={2.5} />
+                            <span className="text-sm font-bold uppercase tracking-tight">{error}</span>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4 md:col-span-2">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Nombre de la Máquina / Equipo *</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="md:col-span-2">
+                            <label className="block text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3 ml-1 italic font-sans">Nombre de la Máquina / Equipo *</label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                required
+                                className="w-full bg-gray-50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-slate-900 focus:bg-white focus:border-gym-primary/30 focus:ring-4 focus:ring-gym-primary/5 transition-all outline-none font-bold text-lg placeholder:text-gray-300"
+                                placeholder="Ej: Caminadora Matrix T-50"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3 ml-1 italic font-sans">Estado Actual *</label>
+                            <div className="relative">
+                                <select
+                                    name="status"
+                                    value={formData.status}
                                     onChange={handleChange}
                                     required
-                                    className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
-                                    placeholder="Ej: Caminadora Matrix T-50"
-                                />
+                                    className="w-full bg-gray-50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-slate-900 focus:bg-white focus:border-gym-primary/30 focus:ring-4 focus:ring-gym-primary/5 transition-all outline-none font-black uppercase tracking-widest text-xs cursor-pointer appearance-none shadow-sm"
+                                >
+                                    <option value="OPERATIONAL">🟢 Operativo</option>
+                                    <option value="MAINTENANCE">🟠 Mantenimiento</option>
+                                    <option value="OUT_OF_SERVICE">🔴 Fuera de Servicio</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Estado Actual *</label>
-                            <select
-                                name="status"
-                                value={formData.status}
-                                onChange={handleChange}
-                                required
-                                className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
-                            >
-                                <option value="OPERATIONAL">Operativo ✅</option>
-                                <option value="MAINTENANCE">En Mantenimiento 🔧</option>
-                                <option value="OUT_OF_SERVICE">Fuera de Servicio ❌</option>
-                            </select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Ubicación / Área</label>
+                        <div>
+                            <label className="block text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3 ml-1 italic font-sans">Ubicación / Área</label>
                             <input
                                 type="text"
                                 name="location"
                                 value={formData.location}
                                 onChange={handleChange}
-                                className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
+                                className="w-full bg-gray-50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-slate-900 focus:bg-white focus:border-gym-primary/30 focus:ring-4 focus:ring-gym-primary/5 transition-all outline-none font-bold text-sm placeholder:text-gray-300"
                                 placeholder="Ej: Zona Cardiovascular"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Fecha de Compra</label>
+                        <div>
+                            <label className="block text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3 ml-1 italic font-sans">Fecha de Compra</label>
                             <input
                                 type="date"
                                 name="purchaseDate"
                                 value={formData.purchaseDate}
                                 onChange={handleChange}
-                                className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
+                                className="w-full bg-gray-50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-slate-900 focus:bg-white focus:border-gym-primary/30 focus:ring-4 focus:ring-gym-primary/5 transition-all outline-none font-bold text-sm"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Último Mantenimiento</label>
+                        <div>
+                            <label className="block text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3 ml-1 italic font-sans">Último Mantenimiento</label>
                             <input
                                 type="date"
                                 name="lastMaintenance"
                                 value={formData.lastMaintenance}
                                 onChange={handleChange}
-                                className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
+                                className="w-full bg-gray-50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-slate-900 focus:bg-white focus:border-gym-primary/30 focus:ring-4 focus:ring-gym-primary/5 transition-all outline-none font-bold text-sm"
                             />
                         </div>
 
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Descripción / Detalles Técnicos</label>
+                        <div className="md:col-span-2">
+                            <label className="block text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3 ml-1 italic font-sans">URL de la Imagen (Opcional)</label>
+                            <div className="flex gap-4 items-start">
+                                <div className="flex-1">
+                                    <input
+                                        type="text"
+                                        name="photoUrl"
+                                        value={formData.photoUrl}
+                                        onChange={handleChange}
+                                        className="w-full bg-gray-50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-slate-900 focus:bg-white focus:border-gym-primary/30 focus:ring-4 focus:ring-gym-primary/5 transition-all outline-none font-bold text-sm placeholder:text-gray-300"
+                                        placeholder="https://ejemplo.com/imagen.jpg"
+                                    />
+                                </div>
+                                {formData.photoUrl && (
+                                    <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-100 bg-white ring-4 ring-gray-50 flex-shrink-0">
+                                        <img
+                                            src={formData.photoUrl}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/100?text=Error')}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3 ml-1 italic font-sans">Descripción / Detalles Técnicos</label>
                             <textarea
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
-                                className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all min-h-[80px]"
+                                className="w-full bg-gray-50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-slate-900 focus:bg-white focus:border-gym-primary/30 focus:ring-4 focus:ring-gym-primary/5 transition-all outline-none min-h-[100px] font-medium placeholder:text-gray-300"
                                 placeholder="Modelo, marca, número de serie..."
                             />
                         </div>
 
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-medium text-gray-400 uppercase tracking-wider">Notas Adicionales</label>
+                        <div className="md:col-span-2">
+                            <label className="block text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-3 ml-1 italic font-sans">Notas Adicionales</label>
                             <textarea
                                 name="notes"
                                 value={formData.notes}
                                 onChange={handleChange}
-                                className="w-full bg-black/20 border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all min-h-[80px]"
+                                className="w-full bg-gray-50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-slate-900 focus:bg-white focus:border-gym-primary/30 focus:ring-4 focus:ring-gym-primary/5 transition-all outline-none min-h-[100px] font-medium placeholder:text-gray-300"
                                 placeholder="Historial de fallas o notas especiales..."
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                    <div className="flex justify-end gap-4 pt-6">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-3 rounded-2xl text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all"
+                            className="px-10 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-gray-100 transition-all italic"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="bg-gym-primary hover:bg-gym-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-8 py-3 rounded-2xl flex items-center gap-2 transition-all shadow-lg shadow-gym-primary/20"
+                            className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black px-12 py-5 rounded-2xl flex items-center gap-3 transition-all shadow-xl shadow-slate-200 uppercase tracking-widest text-[10px] active:scale-95"
                         >
                             {loading ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
-                                <Save size={20} />
+                                <Save size={18} strokeWidth={3} />
                             )}
-                            <span>{equipment ? 'Actualizar' : 'Guardar'}</span>
+                            <span>{equipment ? 'Actualizar Registro' : 'Guardar Equipo'}</span>
                         </button>
                     </div>
                 </form>

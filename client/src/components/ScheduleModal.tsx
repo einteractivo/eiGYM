@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import GymClassService, { type GymClass, type Schedule, type Trainer } from '../services/GymClassService';
+import UserModal from './UserModal';
 
 interface ScheduleModalProps {
     isOpen: boolean;
@@ -33,15 +34,18 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, onSucces
     });
     const [loading, setLoading] = useState(false);
 
+    const [isTrainerModalOpen, setIsTrainerModalOpen] = useState(false);
+
+    const fetchTrainers = async () => {
+        try {
+            const data = await GymClassService.getTrainers();
+            setTrainers(data);
+        } catch (error) {
+            console.error('Error fetching trainers:', error);
+        }
+    };
+
     useEffect(() => {
-        const fetchTrainers = async () => {
-            try {
-                const data = await GymClassService.getTrainers();
-                setTrainers(data);
-            } catch (error) {
-                console.error('Error fetching trainers:', error);
-            }
-        };
         if (isOpen) fetchTrainers();
     }, [isOpen]);
 
@@ -103,44 +107,56 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, onSucces
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-gym-card w-full max-w-lg rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden">
-                <div className="p-6 border-b border-white/5 flex justify-between items-center">
-                    <h2 className="text-xl font-bold">{schedule ? 'Editar Horario' : 'Nuevo Horario'}</h2>
-                    <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/5 rounded-[3rem] w-full max-w-lg shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-300 transition-colors">
+                <div className="px-10 py-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-slate-900 transition-colors">
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{schedule ? 'Editar Horario' : 'Nuevo Horario'}</h2>
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest mt-1">Gestión de tiempos y clases</p>
+                    </div>
+                    <button onClick={onClose} className="w-10 h-10 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white transition-all hover:bg-gray-50 dark:hover:bg-white/5 rounded-2xl">
                         <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="p-10 space-y-8">
+                    <div className="grid grid-cols-2 gap-6">
                         <div className="col-span-2 sm:col-span-1">
-                            <label className="block text-sm font-medium text-gray-400 mb-1">Clase</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">CLASE *</label>
                             <select
                                 required
                                 value={formData.classId}
                                 onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-gym-primary transition-colors text-white"
+                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-black text-xs uppercase tracking-tight appearance-none cursor-pointer"
                             >
-                                <option value="" disabled className="bg-gym-card text-gray-400">Seleccionar clase</option>
+                                <option value="" disabled className="dark:bg-slate-900">Seleccionar clase</option>
                                 {classes.map(cls => (
-                                    <option key={cls.id} value={cls.id} className="bg-gym-card text-white">
+                                    <option key={cls.id} value={cls.id} className="dark:bg-slate-900">
                                         {cls.name}
                                     </option>
                                 ))}
                             </select>
                         </div>
                         <div className="col-span-2 sm:col-span-1">
-                            <label className="block text-sm font-medium text-gray-400 mb-1">Entrenador</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">ENTRENADOR *</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsTrainerModalOpen(true)}
+                                    className="text-[10px] font-black text-gym-primary hover:text-gym-primary/80 uppercase tracking-widest flex items-center gap-1 transition-colors"
+                                >
+                                    <Plus size={12} strokeWidth={3} /> Nuevo
+                                </button>
+                            </div>
                             <select
                                 required
                                 value={formData.trainerId}
                                 onChange={(e) => setFormData({ ...formData, trainerId: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-gym-primary transition-colors text-white"
+                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-black text-xs uppercase tracking-tight appearance-none cursor-pointer"
                             >
-                                <option value="" disabled className="bg-gym-card text-gray-400">Seleccionar entrenador</option>
+                                <option value="" disabled className="dark:bg-slate-900">Seleccionar entrenador</option>
                                 {trainers.map(trainer => (
-                                    <option key={trainer.id} value={trainer.id} className="bg-gym-card text-white">
+                                    <option key={trainer.id} value={trainer.id} className="dark:bg-slate-900">
                                         {trainer.name} ({trainer.role})
                                     </option>
                                 ))}
@@ -148,17 +164,17 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, onSucces
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Día de la Semana</label>
+                    <div className="space-y-3">
+                        <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">DÍA DE LA SEMANA</label>
                         <div className="flex flex-wrap gap-2">
                             {DAYS.map(day => (
                                 <button
                                     key={day.id}
                                     type="button"
                                     onClick={() => setFormData({ ...formData, dayOfWeek: day.id })}
-                                    className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${formData.dayOfWeek === day.id
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.dayOfWeek === day.id
                                         ? 'bg-gym-primary text-white shadow-lg shadow-gym-primary/20'
-                                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                        : 'bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 hover:bg-white dark:hover:bg-white/10'
                                         }`}
                                 >
                                     {day.name}
@@ -167,72 +183,86 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, onSucces
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-1">Hora Inicio</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">HORA INICIO</label>
                             <input
                                 type="time"
                                 required
                                 value={formData.startTime}
                                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-gym-primary transition-colors text-white"
+                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-bold text-sm"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-1">Hora Fin</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">HORA FIN</label>
                             <input
                                 type="time"
                                 required
                                 value={formData.endTime}
                                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-gym-primary transition-colors text-white"
+                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-bold text-sm"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Capacidad Máxima</label>
+                        <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">CAPACIDAD MÁXIMA</label>
                         <input
                             type="number"
                             required
                             min="1"
                             value={formData.capacity}
                             onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-gym-primary transition-colors text-white"
+                            className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-black text-sm"
                         />
                     </div>
 
-                    <div className="flex items-center gap-3 py-2">
+                    <div className="flex items-center gap-4 py-2">
                         <input
                             type="checkbox"
                             id="schedule-active"
                             checked={formData.active}
                             onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                            className="w-5 h-5 rounded-md border-white/10 bg-white/5 text-gym-primary focus:ring-gym-primary"
+                            className="w-5 h-5 rounded-lg border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gym-primary focus:ring-gym-primary transition-all cursor-pointer"
                         />
-                        <label htmlFor="schedule-active" className="text-sm font-medium text-gray-300 select-none cursor-pointer">
-                            Horario activo y visible
+                        <label htmlFor="schedule-active" className="text-xs font-bold text-slate-600 dark:text-gray-400 select-none cursor-pointer uppercase tracking-tight">
+                            Horario activo y visible en el sistema
                         </label>
                     </div>
 
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-4 pt-4 border-t border-gray-100 dark:border-white/5 bg-white dark:bg-slate-900 transition-colors">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-semibold transition-colors"
+                            className="px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white transition-all"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 px-4 py-3 rounded-xl bg-gym-primary hover:bg-gym-primary/90 text-white font-semibold transition-all shadow-lg shadow-gym-primary/20 disabled:opacity-50"
+                            className="bg-gym-primary hover:bg-gym-primary/90 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed text-white font-black px-10 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-2xl shadow-gym-primary/20 uppercase tracking-widest text-xs min-w-[200px]"
                         >
-                            {loading ? 'Guardando...' : 'Guardar Horario'}
+                            {loading ? (
+                                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    <span>Guardar Horario</span>
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>
+                
             </div>
+
+            <UserModal
+                isOpen={isTrainerModalOpen}
+                onClose={() => setIsTrainerModalOpen(false)}
+                onSuccess={fetchTrainers}
+                initialRole="TRAINER"
+            />
         </div>
     );
 };

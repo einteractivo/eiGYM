@@ -9,7 +9,8 @@ exports.getAllUsers = async (req, res) => {
         
         // If not SUPERADMIN, filter by gymId and exclude SUPERADMINs
         if (req.user.role !== 'SUPERADMIN') {
-            where.gymId = req.user.gymId;
+            const gymId = req.user.gymId || getGymId();
+            if (gymId) where.gymId = gymId;
             where.role = { not: 'SUPERADMIN' };
         }
 

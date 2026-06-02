@@ -1,5 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+const prisma = require('../utils/prisma');
 
 exports.getAllEquipment = async (req, res) => {
     try {
@@ -7,6 +7,7 @@ exports.getAllEquipment = async (req, res) => {
         const equipment = await prisma.equipment.findMany({
             where: {
                 AND: [
+                    req.user.gymId ? { gymId: req.user.gymId } : {},
                     search ? {
                         OR: [
                             { name: { contains: search } },
@@ -28,8 +29,11 @@ exports.getAllEquipment = async (req, res) => {
 
 exports.getEquipmentById = async (req, res) => {
     try {
-        const item = await prisma.equipment.findUnique({
-            where: { id: parseInt(req.params.id) }
+        const item = await prisma.equipment.findFirst({
+            where: { 
+                id: parseInt(req.params.id),
+                ...(req.user.gymId ? { gymId: req.user.gymId } : {})
+            }
         });
         if (!item) return res.status(404).json({ message: 'Equipo no encontrado' });
         res.json(item);
@@ -41,7 +45,10 @@ exports.getEquipmentById = async (req, res) => {
 
 exports.createEquipment = async (req, res) => {
     try {
-        const { name, description, status, location, purchaseDate, lastMaintenance, notes } = req.body;
+        if (!req.user.gymId) {
+            return res.status(400).json({ error: 'Usuario no pertenece a un gimnasio válido.' });
+        }
+        const { name, description, status, location, purchaseDate, lastMaintenance, notes, photoUrl } = req.body;
         const item = await prisma.equipment.create({
             data: {
                 name,
@@ -50,7 +57,9 @@ exports.createEquipment = async (req, res) => {
                 location,
                 purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
                 lastMaintenance: lastMaintenance ? new Date(lastMaintenance) : null,
-                notes
+                notes,
+                photoUrl: photoUrl || null,
+                gymId: req.user.gymId
             }
         });
         res.status(201).json(item);
@@ -62,18 +71,26 @@ exports.createEquipment = async (req, res) => {
 
 exports.updateEquipment = async (req, res) => {
     try {
-        const { name, description, status, location, purchaseDate, lastMaintenance, notes } = req.body;
+        const { name, description, status, location, purchaseDate, lastMaintenance, notes, photoUrl } = req.body;
+        const data = {
+            name,
+            description,
+            status,
+            location,
+            purchaseDate: purchaseDate !== undefined && purchaseDate !== ''
+                ? new Date(purchaseDate)
+                : (purchaseDate === '' || purchaseDate === null ? null : undefined),
+            lastMaintenance: lastMaintenance !== undefined && lastMaintenance !== ''
+                ? new Date(lastMaintenance)
+                : (lastMaintenance === '' || lastMaintenance === null ? null : undefined),
+            notes,
+            photoUrl: photoUrl !== undefined ? photoUrl : undefined
+        };
+        Object.keys(data).forEach(k => data[k] === undefined && delete data[k]);
+
         const item = await prisma.equipment.update({
             where: { id: parseInt(req.params.id) },
-            data: {
-                name,
-                description,
-                status,
-                location,
-                purchaseDate: purchaseDate ? new Date(purchaseDate) : undefined,
-                lastMaintenance: lastMaintenance ? new Date(lastMaintenance) : undefined,
-                notes
-            }
+            data
         });
         res.json(item);
     } catch (error) {
@@ -93,3 +110,4 @@ exports.deleteEquipment = async (req, res) => {
         res.status(500).json({ message: 'Error al eliminar el equipo' });
     }
 };
+

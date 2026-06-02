@@ -1,3 +1,4 @@
+
 # Guía de Despliegue en Vercel - eiGYM
 
 Desplegar una aplicación Full Stack (Express + React + MySQL) en Vercel requiere separar el frontend del backend o usar una configuración monorepo. Aquí tienes el procedimiento recomendado.

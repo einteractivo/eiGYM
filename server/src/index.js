@@ -1,10 +1,17 @@
-const app = require('./app');
-const dotenv = require('dotenv');
+// ⚠️ IMPORTANTE: dotenv.config() debe ir PRIMERO
+require('dotenv').config();
 
-dotenv.config();
+const app = require('./app');
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`[eiGYM] Servidor corriendo en puerto ${PORT}`);
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`[eiGYM] ERROR: El puerto ${PORT} ya está en uso.`);
+    } else {
+        console.error('[eiGYM] Error al iniciar el servidor:', err);
+    }
+    process.exit(1);
 });

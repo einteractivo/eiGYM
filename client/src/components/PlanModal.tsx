@@ -78,15 +78,15 @@ const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, onSuccess, plan 
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center p-6 border-b border-white/10">
-                    <h2 className="text-xl font-bold text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/5 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 transition-colors">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-slate-900">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
                         {plan ? 'Editar Plan' : 'Nuevo Plan'}
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
+                        className="text-gray-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white transition-colors p-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-full"
                     >
                         <X size={20} />
                     </button>
@@ -94,28 +94,28 @@ const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, onSuccess, plan 
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-xl flex items-center gap-2">
+                        <div className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-500 px-4 py-3 rounded-xl flex items-center gap-2">
                             <AlertCircle size={20} />
-                            <span>{error}</span>
+                            <span className="text-sm font-bold">{error}</span>
                         </div>
                     )}
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Nombre del Plan *</label>
+                            <label className="text-xs font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest ml-1">Nombre del Plan *</label>
                             <input
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
+                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-bold"
                                 placeholder="Ej: Mensual Básico"
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">Duración (días) *</label>
+                                <label className="text-xs font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest ml-1">Duración (días) *</label>
                                 <input
                                     type="number"
                                     name="durationDays"
@@ -123,11 +123,11 @@ const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, onSuccess, plan 
                                     onChange={handleChange}
                                     required
                                     min="1"
-                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
+                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-xl px-4 py-3 text-slate-900 dark:text-white font-black text-xl focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all tracking-tight"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">Precio *</label>
+                                <label className="text-xs font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest ml-1">Precio *</label>
                                 <input
                                     type="number"
                                     name="price"
@@ -136,29 +136,29 @@ const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, onSuccess, plan 
                                     required
                                     step="0.01"
                                     min="0"
-                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
+                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-xl px-4 py-3 text-slate-900 dark:text-white font-black text-xl focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all italic tracking-tight placeholder:text-gray-300 dark:placeholder:text-gray-700"
                                     placeholder="0.00"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Descripción</label>
+                            <label className="text-xs font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest ml-1">Descripción</label>
                             <textarea
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all min-h-[100px]"
+                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all min-h-[100px] font-medium"
                                 placeholder="Detalles del plan..."
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                    <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-white/10">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                            className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white transition-all transition-colors"
                         >
                             Cancelar
                         </button>

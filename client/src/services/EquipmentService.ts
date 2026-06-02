@@ -9,6 +9,7 @@ export interface Equipment {
     purchaseDate: string | null;
     lastMaintenance: string | null;
     notes: string | null;
+    photoUrl: string | null;
     createdAt: string;
     updatedAt: string;
 }

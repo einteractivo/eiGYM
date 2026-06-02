@@ -4,6 +4,7 @@ export interface GymClass {
     id: number;
     name: string;
     description?: string;
+    color?: string;
     active: boolean;
     schedules?: Schedule[];
 }

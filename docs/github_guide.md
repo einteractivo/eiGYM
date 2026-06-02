@@ -22,6 +22,7 @@ Abre una terminal en la carpeta principal del proyecto (`eiGYM`) y ejecuta los s
 git config user.email "tu-correo@ejemplo.com"
 git config user.name "Tu Nombre"
 
+
 # 1. Inicializar el repositorio local
 git init
 

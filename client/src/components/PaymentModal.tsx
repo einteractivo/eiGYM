@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle, Search } from 'lucide-react';
 import api from '../services/api';
+import { cn } from '../lib/utils';
 
 interface Member {
     id: number;
@@ -78,59 +79,82 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess 
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center p-6 border-b border-white/10">
-                    <h2 className="text-xl font-bold text-white">Registrar Pago</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/5 rounded-[2rem] sm:rounded-[3rem] w-full max-w-lg max-h-[95vh] shadow-[0_20px_70px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 transition-colors">
+                <div className="flex justify-between items-center px-6 sm:px-10 py-6 sm:py-8 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-slate-900 transition-colors shrink-0">
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Registrar Operación</h2>
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest mt-1">Ingreso de flujo de caja</p>
+                    </div>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
+                        className="w-10 h-10 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white transition-all hover:bg-gray-50 dark:hover:bg-white/5 rounded-2xl"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-10 space-y-6 sm:y-8">
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-3 rounded-xl flex items-center gap-2">
-                            <AlertCircle size={20} />
-                            <span>{error}</span>
+                        <div className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-500 px-5 py-4 rounded-2xl flex items-center gap-3 animate-in shake duration-300">
+                            <AlertCircle size={20} className="shrink-0" />
+                            <span className="text-xs font-black uppercase tracking-tight">{error}</span>
                         </div>
                     )}
 
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Buscar Miembro *</label>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                    <div className="space-y-6">
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em]">IDENTIFICAR MIEMBRO *</label>
+                            <div className="relative group">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 dark:text-gray-600 group-focus-within:text-gym-primary transition-colors" size={18} />
                                 <input
                                     type="text"
                                     value={searchMember}
                                     onChange={(e) => setSearchMember(e.target.value)}
-                                    placeholder="Buscar por nombre o DNI..."
-                                    className="w-full bg-black/20 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
+                                    placeholder="Nombre, apellido o DNI..."
+                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl py-4 pl-12 pr-4 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 focus:ring-8 focus:ring-gym-primary/5 transition-all font-bold text-sm"
                                 />
                             </div>
-                            <select
-                                name="memberId"
-                                value={formData.memberId}
-                                onChange={handleChange}
-                                required
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all mt-2"
-                                size={5}
-                            >
-                                <option value="" disabled>Seleccione un miembro</option>
-                                {members.map(member => (
-                                    <option key={member.id} value={member.id}>
-                                        {member.firstName} {member.lastName} ({member.dni})
-                                    </option>
-                                ))}
-                            </select>
+                            {members.length > 0 && !formData.memberId && (
+                                <div className="mt-2 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden shadow-xl animate-in fade-in slide-in-from-top-2">
+                                    <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
+                                        {members.map(member => (
+                                            <button
+                                                key={member.id}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, memberId: member.id.toString() })}
+                                                className="w-full text-left px-5 py-3 hover:bg-gym-primary/10 hover:text-gym-primary transition-all border-b border-gray-100 dark:border-white/5 last:border-0 flex flex-col"
+                                            >
+                                                <span className="font-extrabold text-slate-900 dark:text-white text-sm">{member.firstName} {member.lastName}</span>
+                                                <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">{member.dni}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.memberId && (
+                                <div className="mt-2 flex items-center justify-between bg-gym-primary/10 border-2 border-gym-primary/20 p-4 rounded-2xl animate-in zoom-in-95">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black text-gym-primary uppercase tracking-[0.2em] leading-none mb-1">Miembro Seleccionado</span>
+                                        <span className="font-black text-slate-900 dark:text-white text-sm">
+                                            {members.find(m => m.id.toString() === formData.memberId)?.firstName} {members.find(m => m.id.toString() === formData.memberId)?.lastName}
+                                        </span>
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, memberId: '' })}
+                                        className="p-2 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">Monto *</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em]">MONTO (S/) *</label>
                                 <input
                                     type="number"
                                     name="amount"
@@ -139,75 +163,79 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess 
                                     required
                                     step="0.01"
                                     min="0"
-                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
+                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-4 text-slate-900 dark:text-white text-xl font-black focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all italic tracking-tight"
                                     placeholder="0.00"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">Método *</label>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em]">MÉTODO *</label>
                                 <select
                                     name="method"
                                     value={formData.method}
                                     onChange={handleChange}
-                                    className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
+                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-4 text-slate-900 dark:text-white font-black text-xs uppercase tracking-widest focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all h-[60px]"
                                 >
-                                    <option value="CASH">Efectivo</option>
-                                    <option value="CARD">Tarjeta</option>
-                                    <option value="TRANSFER">Transferencia</option>
-                                    <option value="YAPE">Yape</option>
-                                    <option value="PLIN">Plin</option>
+                                    <option value="CASH" className="dark:bg-slate-900">Efectivo 💵</option>
+                                    <option value="CARD" className="dark:bg-slate-900">Tarjeta 💳</option>
+                                    <option value="TRANSFER" className="dark:bg-slate-900">Transf. 🏦</option>
+                                    <option value="YAPE" className="dark:bg-slate-900">Yape 📱</option>
+                                    <option value="PLIN" className="dark:bg-slate-900">Plin 📱</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Tipo de Pago</label>
-                            <select
-                                name="type"
-                                value={formData.type}
-                                onChange={handleChange}
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all"
-                            >
-                                <option value="MEMBERSHIP">Membresía</option>
-                                <option value="PRODUCT">Producto</option>
-                                <option value="OTHER">Otro</option>
-                            </select>
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em]">TIPO DE INGRESO</label>
+                            <div className="flex flex-wrap gap-2 sm:gap-3">
+                                {(['MEMBERSHIP', 'PRODUCT', 'OTHER'] as const).map(t => (
+                                    <button
+                                        key={t}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, type: t })}
+                                        className={cn(
+                                            "flex-1 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all border-2 uppercase",
+                                            formData.type === t
+                                                ? "bg-slate-900 dark:bg-white border-slate-900 dark:border-white text-white dark:text-slate-900 shadow-lg"
+                                                : "bg-white dark:bg-white/5 border-gray-100 dark:border-white/10 text-gray-400 dark:text-gray-500 hover:border-gray-200 dark:hover:border-white/20"
+                                        )}
+                                    >
+                                        {t === 'MEMBERSHIP' ? 'Membresía' : t === 'PRODUCT' ? 'Producto' : 'Otro'}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Notas</label>
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em]">NOTAS ADICIONALES</label>
                             <textarea
                                 name="notes"
                                 value={formData.notes}
                                 onChange={handleChange}
-                                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-gym-primary/50 focus:border-gym-primary transition-all min-h-[80px]"
-                                placeholder="Detalles adicionales..."
+                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-4 text-sm text-slate-900 dark:text-white font-medium focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all min-h-[100px] placeholder:text-gray-300 dark:placeholder:text-gray-700"
+                                placeholder="..."
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 p-6 sm:px-10 sm:py-8 border-t border-gray-100 dark:border-white/5 bg-white dark:bg-slate-900 transition-colors shrink-0">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
+                            className="px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white transition-all"
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="bg-gym-primary hover:bg-gym-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-gym-primary/20"
+                            className="bg-gym-primary hover:bg-gym-primary/90 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed text-white font-black px-10 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-2xl shadow-gym-primary/20 uppercase tracking-widest text-xs min-w-[200px]"
                         >
                             {loading ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    <span>Registrando...</span>
-                                </>
+                                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
-                                    <Save size={18} />
-                                    <span>Registrar Pago</span>
+                                    <Save size={18} strokeWidth={3} />
+                                    <span>Guardar Pago</span>
                                 </>
                             )}
                         </button>

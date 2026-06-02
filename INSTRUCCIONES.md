@@ -2,6 +2,10 @@
 
 Sigue estos pasos para levantar el proyecto en otra computadora.
 
+> [!TIP]
+> **¿Quieres una instalación rápida?**  
+> Usa el **`INSTALAR_SISTEMA.bat`** en la carpeta principal. Este script lo configura todo automáticamente por ti (base de datos, dependencias y datos iniciales).
+
 ## Pre-requisitos
 
 Asegúrate de tener instalado en tu sistema:

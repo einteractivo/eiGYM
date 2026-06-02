@@ -2,8 +2,9 @@
   RewriteEngine On
   RewriteBase /
 
-  # Proxy /api requests to Digital Ocean backend
+  # Proxy /api and /uploads requests to Digital Ocean backend
   RewriteRule ^api/(.*) http://146.190.215.129:3000/api/$1 [P,L]
+  RewriteRule ^uploads/(.*) http://146.190.215.129:3000/uploads/$1 [P,L]
 
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f

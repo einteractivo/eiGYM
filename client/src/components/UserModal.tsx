@@ -9,9 +9,10 @@ interface UserModalProps {
     userToEdit?: any;
     initialRole?: string;
     gymId?: number | null;
+    fixedRole?: boolean;
 }
 
-const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, userToEdit, initialRole, gymId }) => {
+const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, userToEdit, initialRole, gymId, fixedRole }) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -71,8 +72,8 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, userT
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/5 rounded-[3rem] w-full max-w-lg shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-300 transition-colors">
-                <div className="flex justify-between items-center px-10 py-8 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-slate-900 transition-colors">
+            <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/5 rounded-[2rem] sm:rounded-[3rem] w-full max-w-lg max-h-[95vh] flex flex-col shadow-[0_20px_70px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-300 transition-colors">
+                <div className="flex justify-between items-center px-6 sm:px-10 py-6 sm:py-8 border-b border-gray-100 dark:border-white/5 bg-white dark:bg-slate-900 shrink-0 transition-colors">
                     <div>
                         <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                             {userToEdit ? 'Editar Usuario' : 'Nuevo Usuario Staff'}
@@ -87,88 +88,91 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, onSuccess, userT
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-10 space-y-8">
-                    {error && (
-                        <div className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-500 px-5 py-4 rounded-2xl flex items-center gap-3 animate-in shake duration-300">
-                            <AlertCircle size={20} className="shrink-0" />
-                            <span className="text-xs font-black uppercase tracking-tight">{error}</span>
-                        </div>
-                    )}
-
-                    <div className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">NOMBRE COMPLETO *</label>
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                required
-                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-bold text-sm"
-                                placeholder="Ej: Juan Antonio Pérez"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">CORREO ELECTRÓNICO *</label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-bold text-sm"
-                                placeholder="staff@eigym.com"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">CONTRASEÑA {userToEdit && '(DEJAR EN BLANCO PARA NO CAMBIAR)'}</label>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    required={!userToEdit}
-                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 pr-12 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-bold text-sm"
-                                    placeholder="••••••••"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gym-primary transition-colors focus:outline-none"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
+                <form onSubmit={handleSubmit} className="flex flex-col min-h-0">
+                    <div className="p-6 sm:p-10 space-y-6 sm:space-y-8 overflow-y-auto custom-scrollbar">
+                        {error && (
+                            <div className="bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-500 px-5 py-4 rounded-2xl flex items-center gap-3 animate-in shake duration-300">
+                                <AlertCircle size={20} className="shrink-0" />
+                                <span className="text-xs font-black uppercase tracking-tight">{error}</span>
                             </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">NIVEL DE ACCESO *</label>
-                            <select
-                                name="role"
-                                value={formData.role}
-                                onChange={handleChange}
-                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-black text-xs uppercase tracking-tight appearance-none cursor-pointer"
-                            >
-                                <option value="ADMIN" className="dark:bg-slate-900">Administrador</option>
-                                <option value="RECEPTION" className="dark:bg-slate-900">Recepción</option>
-                                <option value="TRAINER" className="dark:bg-slate-900">Entrenador</option>
-                                <option value="SUPERADMIN" className="dark:bg-slate-900">Superadmin</option>
-                            </select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">OBSERVACIONES</label>
-                            <textarea
-                                name="notes"
-                                value={formData.notes}
-                                onChange={handleChange}
-                                rows={3}
-                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-medium text-sm resize-none"
-                                placeholder="..."
-                            />
+                        )}
+
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">NOMBRE COMPLETO *</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-bold text-sm"
+                                    placeholder="Ej: Juan Antonio Pérez"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">CORREO ELECTRÓNICO *</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-bold text-sm"
+                                    placeholder="staff@eigym.com"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">CONTRASEÑA {userToEdit && '(DEJAR EN BLANCO PARA NO CAMBIAR)'}</label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        required={!userToEdit}
+                                        className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 pr-12 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-bold text-sm"
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gym-primary transition-colors focus:outline-none"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">NIVEL DE ACCESO *</label>
+                                <select
+                                    name="role"
+                                    value={formData.role}
+                                    onChange={handleChange}
+                                    disabled={fixedRole}
+                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-black text-xs uppercase tracking-tight appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <option value="ADMIN" className="dark:bg-slate-900">Administrador</option>
+                                    <option value="RECEPTION" className="dark:bg-slate-900">Recepción</option>
+                                    <option value="TRAINER" className="dark:bg-slate-900">Entrenador</option>
+                                    <option value="SUPERADMIN" className="dark:bg-slate-900">Superadmin</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">OBSERVACIONES</label>
+                                <textarea
+                                    name="notes"
+                                    value={formData.notes}
+                                    onChange={handleChange}
+                                    rows={3}
+                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-700 focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-medium text-sm resize-none"
+                                    placeholder="..."
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-4 pt-4 border-t border-gray-100 dark:border-white/5 bg-white dark:bg-slate-900 transition-colors">
+                    <div className="flex justify-end gap-4 px-6 sm:px-10 py-6 border-t border-gray-100 dark:border-white/5 bg-white dark:bg-slate-900 shrink-0 transition-colors">
                         <button
                             type="button"
                             onClick={onClose}

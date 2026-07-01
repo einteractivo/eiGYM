@@ -19,14 +19,24 @@
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  # Never cache API responses
+  SetEnvIf Request_URI "^/api/" NO_CACHE=true
+  Header set Cache-Control "no-cache, no-store, must-revalidate" env=NO_CACHE
+  Header set Pragma "no-cache" env=NO_CACHE
+  Header set Expires "0" env=NO_CACHE
 </IfModule>
 
-# Caching for Static Assets
+# Caching for Static Assets (only non-API files)
 <IfModule mod_expires.c>
   ExpiresActive On
-  ExpiresDefault "access plus 1 month"
   ExpiresByType text/html "access plus 0 seconds"
   ExpiresByType application/javascript "access plus 1 year"
   ExpiresByType text/css "access plus 1 year"
   ExpiresByType image/x-icon "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType application/x-font-woff "access plus 1 year"
 </IfModule>

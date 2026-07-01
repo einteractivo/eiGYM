@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SaleReceiptModalProps {
     isOpen: boolean;
@@ -13,6 +14,7 @@ interface SaleReceiptModalProps {
 
 const SaleReceiptModal: React.FC<SaleReceiptModalProps> = ({ isOpen, onClose, sale }) => {
     const [gymSettings, setGymSettings] = useState<any>(null);
+    const { user } = useAuth();
 
     useEffect(() => {
         if (isOpen) {
@@ -56,7 +58,7 @@ const SaleReceiptModal: React.FC<SaleReceiptModalProps> = ({ isOpen, onClose, sa
                             <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-white rounded-full translate-y-1/2" />
                             <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-white rounded-full translate-y-1/2" />
                             <h2 className="text-3xl font-black tracking-tighter uppercase italic leading-none">
-                                {gymSettings?.gym_name || 'CENTROM eiGYM'}
+                                {gymSettings?.gym_name || user?.gym?.name || 'GIMNASIO CENTRAL'}
                             </h2>
                             <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] leading-relaxed">
                                 {gymSettings?.gym_address || 'Calle Principal 123, Ciudad'}<br />

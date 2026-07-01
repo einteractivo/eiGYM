@@ -23,7 +23,10 @@ import {
     BarChart3,
     Globe,
     FileText,
-    ShieldCheck
+    ShieldCheck,
+    Lock,
+    Unlock,
+    UserCheck
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -31,6 +34,7 @@ import { cn } from '../lib/utils';
 import api, { getUploadUrl } from '../services/api';
 import DeveloperInfoModal from './DeveloperInfoModal';
 import PWAInstallPrompt from './PWAInstallPrompt';
+import CashFlowService from '../services/CashFlowService';
 
 interface NavItemProps {
     to: string;
@@ -78,6 +82,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
     const [settings, setSettings] = React.useState<any>(null);
     const [licenseStatus, setLicenseStatus] = React.useState<any>(null);
+    const [isCashOpen, setIsCashOpen] = React.useState<boolean>(false);
 
     React.useEffect(() => {
         const fetchSettings = async () => {
@@ -104,13 +109,32 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 console.error('Error fetching license status:', error);
             }
         };
+        const fetchCashStatus = async () => {
+            try {
+                const session = await CashFlowService.getCurrentSession();
+                setIsCashOpen(session && session.status === 'OPEN');
+            } catch (error) {
+                setIsCashOpen(false);
+            }
+        };
         fetchSettings();
         fetchLicense();
+        fetchCashStatus();
 
         // Listen for live updates from Settings page
         window.addEventListener('settingsUpdated', fetchSettings);
-        return () => window.removeEventListener('settingsUpdated', fetchSettings);
-    }, [user?.role]); // Only re-run if user role changes (e.g. login/logout)
+        window.addEventListener('cashFlowUpdated', fetchCashStatus);
+        
+        return () => {
+            window.removeEventListener('settingsUpdated', fetchSettings);
+            window.removeEventListener('cashFlowUpdated', fetchCashStatus);
+        };
+    }, [user?.role, location.pathname]); // Also re-fetch cash status on route changes
+
+    // Scroll to top on route change
+    React.useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [location.pathname]);
 
     const handleLogout = () => {
         logout();
@@ -341,6 +365,31 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {/* Asistencia Shortcut */}
+                        <button
+                            onClick={() => navigate('/attendance')}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-bold text-white bg-gym-primary/90 hover:bg-gym-primary rounded-xl transition-all shadow-md"
+                            title="Ir a Asistencia"
+                        >
+                            <UserCheck size={16} strokeWidth={2.5} />
+                            <span className="hidden sm:inline italic uppercase">Asistencia</span>
+                        </button>
+
+                        {/* Caja Status Shortcut */}
+                        <button
+                            onClick={() => navigate('/cash-flow')}
+                            className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 text-sm font-bold text-white rounded-xl transition-all shadow-md",
+                                isCashOpen ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"
+                            )}
+                            title={isCashOpen ? "Caja Abierta" : "Caja Cerrada"}
+                        >
+                            {isCashOpen ? <Unlock size={16} strokeWidth={2.5} /> : <Lock size={16} strokeWidth={2.5} />}
+                            <span className="hidden sm:inline italic uppercase">{isCashOpen ? 'Caja Abierta' : 'Caja Cerrada'}</span>
+                        </button>
+
+                        <div className="w-px h-6 bg-gray-100 dark:bg-white/10 mx-1 hidden sm:block" />
+
                         {/* Theme Toggle */}
                         <button
                             onClick={toggleTheme}

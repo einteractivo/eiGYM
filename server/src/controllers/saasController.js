@@ -301,6 +301,21 @@ exports.updateRegistrationStatus = async (req, res) => {
     }
 };
 
+exports.deleteRegistration = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const existing = await prisma.gymRegistration.findUnique({ where: { id } });
+        if (!existing) {
+            return res.status(404).json({ message: 'Solicitud no encontrada' });
+        }
+        await prisma.gymRegistration.delete({ where: { id } });
+        res.json({ message: 'Solicitud eliminada correctamente' });
+    } catch (error) {
+        console.error('[saas/deleteRegistration]', error);
+        res.status(500).json({ message: 'Error del servidor' });
+    }
+};
+
 // ─── SAAS USERS (SuperAdmins) ─────────────────────────────────────────────────
 
 exports.getSaasUsers = async (req, res) => {

@@ -142,6 +142,7 @@ const Trainers: React.FC = () => {
                 onSuccess={fetchTrainers}
                 userToEdit={selectedTrainer}
                 initialRole="TRAINER"
+                fixedRole={true}
             />
         </div>
     );

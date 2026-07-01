@@ -74,9 +74,17 @@ exports.updateSettings = async (req, res) => {
 
 exports.getLicenseStatus = async (req, res) => {
     try {
-        const gymId = getGymId();
+        let gymId = req.user?.gymId || getGymId();
 
-        // SuperAdmin has unlimited access
+        // SUPERADMIN can pass ?gymId= or ?slug= to check a specific gym
+        if (!gymId && req.query.gymId) {
+            gymId = parseInt(req.query.gymId);
+        }
+        if (!gymId && req.query.slug) {
+            const gym = await prisma.gym.findUnique({ where: { slug: req.query.slug }, select: { id: true } });
+            if (gym) gymId = gym.id;
+        }
+
         if (!gymId) {
             return res.json({
                 daysRemaining: 999,

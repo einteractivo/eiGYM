@@ -5,6 +5,7 @@ const PWAInstallPrompt = () => {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isVisible, setIsVisible] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
+    const [isClosed, setIsClosed] = useState(false);
 
     useEffect(() => {
         // Detect iOS
@@ -24,6 +25,7 @@ const PWAInstallPrompt = () => {
         // Check if already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
             setIsVisible(false);
+            setIsClosed(true);
         }
 
         return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -40,17 +42,18 @@ const PWAInstallPrompt = () => {
         
         if (outcome === 'accepted') {
             setIsVisible(false);
+            setIsClosed(true);
         }
         setDeferredPrompt(null);
     };
 
-    if (!isVisible && !isIOS) return null;
+    if (isClosed || (!isVisible && !isIOS)) return null;
 
     return (
         <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-right-10 duration-500">
             <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-white/10 p-6 rounded-[2rem] shadow-2xl max-w-xs transition-colors relative overflow-hidden group">
                 <button 
-                    onClick={() => setIsVisible(false)}
+                    onClick={() => setIsClosed(true)}
                     className="absolute top-4 right-4 text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                     <X size={16} />

@@ -33,6 +33,7 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
         fingerprintId: '',
         planId: '',
         paymentMethod: 'CASH',
+        amountPaid: '',
         notes: ''
     });
     const [plans, setPlans] = useState<Plan[]>([]);
@@ -40,6 +41,12 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
     const [error, setError] = useState<string | null>(null);
     const [showWebcam, setShowWebcam] = useState(false);
     const [photo, setPhoto] = useState<string | null>(null);
+    const [fullMember, setFullMember] = useState<any>(null);
+
+    const [showDebtPayment, setShowDebtPayment] = useState(false);
+    const [debtPaymentMethod, setDebtPaymentMethod] = useState('CASH');
+    const [debtPaymentAmount, setDebtPaymentAmount] = useState('');
+    const [payingDebt, setPayingDebt] = useState(false);
 
     useEffect(() => {
         if (member) {
@@ -55,6 +62,7 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
                 fingerprintId: member.fingerprintId || '',
                 planId: '',
                 paymentMethod: 'CASH',
+                amountPaid: '',
                 notes: member.notes || ''
             });
             setPhoto(member.photoUrl || null);
@@ -71,6 +79,7 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
                 fingerprintId: '',
                 planId: '',
                 paymentMethod: 'CASH',
+                amountPaid: '',
                 notes: ''
             });
             setPhoto(null);
@@ -93,6 +102,22 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
         }
     }, [isOpen, isEditing, member]);
 
+    useEffect(() => {
+        if (isOpen && member && !isEditing) {
+            const fetchFullMember = async () => {
+                try {
+                    const response = await api.get(`/members/${member.id}`);
+                    setFullMember(response.data);
+                } catch (err) {
+                    console.error('Error fetching full member', err);
+                }
+            };
+            fetchFullMember();
+        } else {
+            setFullMember(null);
+        }
+    }, [isOpen, member, isEditing]);
+
     if (!isOpen) return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -102,6 +127,16 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
             // Only numbers, max 8 digits for Peruvian DNI
             const numericValue = value.replace(/\D/g, '').slice(0, 8);
             setFormData({ ...formData, [name]: numericValue });
+            return;
+        }
+
+        if (name === 'planId') {
+            const plan = plans.find(p => p.id === parseInt(value));
+            setFormData({ 
+                ...formData, 
+                [name]: value,
+                amountPaid: plan ? plan.price.toString() : ''
+            });
             return;
         }
 
@@ -133,6 +168,34 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
             setError(err.response?.data?.message || 'Error al guardar el miembro');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDebtPayment = async (membershipId: number) => {
+        if (!debtPaymentAmount || parseFloat(debtPaymentAmount) <= 0) return;
+        setPayingDebt(true);
+        try {
+            await api.post('/payments', {
+                memberId: member.id,
+                membershipId,
+                amount: parseFloat(debtPaymentAmount),
+                method: debtPaymentMethod,
+                type: 'INCOME',
+                notes: 'Pago de deuda de membresía'
+            });
+            setShowDebtPayment(false);
+            setDebtPaymentAmount('');
+            // Refetch full member to update payments
+            const response = await api.get(`/members/${member.id}`);
+            setFullMember(response.data);
+            
+            // Note: in a real scenario we might need to notify parent to refresh overall member list 
+            // but for payments it's mainly seen in this modal.
+        } catch (err: any) {
+            console.error('Error paying debt', err);
+            alert(err.response?.data?.message || 'Error al procesar el pago');
+        } finally {
+            setPayingDebt(false);
         }
     };
 
@@ -200,24 +263,112 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
                                         <span>Plan de Entrenamiento</span>
                                     </div>
                                     {activeMembership ? (
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <div>
-                                                <div className="text-[9px] font-black text-gym-primary/60 uppercase tracking-wider mb-1">MEMBRESÍA</div>
-                                                <div className="font-black text-slate-900 dark:text-white text-xl tracking-tight uppercase">
-                                                    {activeMembership.plan?.name || '---'}
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div>
+                                                    <div className="text-[9px] font-black text-gym-primary/60 uppercase tracking-wider mb-1">MEMBRESÍA</div>
+                                                    <div className="font-black text-slate-900 dark:text-white text-xl tracking-tight uppercase">
+                                                        {activeMembership.plan?.name || '---'}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-[9px] font-black text-gym-primary/60 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                        <Calendar size={12} /> FECHA DE VENCIMIENTO
+                                                    </div>
+                                                    <div className={cn(
+                                                        "font-black text-xl tracking-tighter italic",
+                                                        isExpired ? 'text-red-500' : 'text-slate-900 dark:text-white'
+                                                    )}>
+                                                        {format(new Date(activeMembership.endDate), "dd MMM yyyy", { locale: es })}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <div className="text-[9px] font-black text-gym-primary/60 uppercase tracking-wider mb-1 flex items-center gap-1">
-                                                    <Calendar size={12} /> FECHA DE VENCIMIENTO
-                                                </div>
-                                                <div className={cn(
-                                                    "font-black text-xl tracking-tighter italic",
-                                                    isExpired ? 'text-red-500' : 'text-slate-900 dark:text-white'
-                                                )}>
-                                                    {format(new Date(activeMembership.endDate), "dd MMM yyyy", { locale: es })}
-                                                </div>
-                                            </div>
+                                            {(() => {
+                                                if (!fullMember?.payments) return null;
+                                                const membershipPayments = fullMember.payments.filter((p: any) => p.membershipId === activeMembership.id);
+                                                const totalPaid = membershipPayments.reduce((acc: number, p: any) => acc + parseFloat(p.amount), 0);
+                                                const price = parseFloat(activeMembership.price);
+                                                const debt = price - totalPaid;
+                                                
+                                                if (debt > 0.01) { // Adding small tolerance for floating point
+                                                    return (
+                                                        <div className="flex flex-col gap-3">
+                                                            <div className="bg-red-50 dark:bg-red-500/10 border-2 border-red-200 dark:border-red-500/20 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                                <div className="flex items-center gap-2">
+                                                                    <AlertCircle className="text-red-500" size={16} />
+                                                                    <span className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">Deuda Pendiente</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="text-xl font-black text-red-600 dark:text-red-400 uppercase tracking-tighter">
+                                                                        S/ {debt.toFixed(2)}
+                                                                    </div>
+                                                                    {!showDebtPayment && (
+                                                                        <button 
+                                                                            type="button" 
+                                                                            onClick={() => {
+                                                                                setDebtPaymentAmount(debt.toFixed(2));
+                                                                                setShowDebtPayment(true);
+                                                                            }}
+                                                                            className="bg-red-500 hover:bg-red-600 text-white text-[10px] font-black uppercase px-4 py-2 rounded-lg transition-colors shadow-sm shrink-0"
+                                                                        >
+                                                                            Pagar Deuda
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            {showDebtPayment && (
+                                                                <div className="bg-white dark:bg-slate-900 border-2 border-red-100 dark:border-red-500/20 p-4 rounded-xl space-y-4 animate-in slide-in-from-top-2">
+                                                                    <div className="grid grid-cols-2 gap-4">
+                                                                        <div className="space-y-1">
+                                                                            <label className="text-[9px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">Monto a Pagar (S/)</label>
+                                                                            <input
+                                                                                type="number"
+                                                                                step="0.01"
+                                                                                value={debtPaymentAmount}
+                                                                                onChange={e => setDebtPaymentAmount(e.target.value)}
+                                                                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-red-500/30 transition-all font-bold text-sm"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="space-y-1">
+                                                                            <label className="text-[9px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">Método</label>
+                                                                            <select
+                                                                                value={debtPaymentMethod}
+                                                                                onChange={e => setDebtPaymentMethod(e.target.value)}
+                                                                                className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-red-500/30 transition-all font-bold text-sm cursor-pointer"
+                                                                            >
+                                                                                <option value="CASH" className="dark:bg-slate-900">EFECTIVO</option>
+                                                                                <option value="CARD" className="dark:bg-slate-900">TARJETA</option>
+                                                                                <option value="YAPE" className="dark:bg-slate-900">YAPE</option>
+                                                                                <option value="PLIN" className="dark:bg-slate-900">PLIN</option>
+                                                                                <option value="TRANSFER" className="dark:bg-slate-900">TRANSFERENCIA</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex gap-2 justify-end pt-2">
+                                                                        <button 
+                                                                            type="button" 
+                                                                            onClick={() => setShowDebtPayment(false)}
+                                                                            className="text-[10px] font-bold text-slate-400 dark:text-gray-500 hover:text-slate-600 dark:hover:text-gray-300 px-3 py-2 uppercase tracking-widest transition-colors"
+                                                                        >
+                                                                            Cancelar
+                                                                        </button>
+                                                                        <button 
+                                                                            type="button"
+                                                                            disabled={payingDebt}
+                                                                            onClick={() => handleDebtPayment(activeMembership.id)}
+                                                                            className="bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[10px] font-black uppercase px-6 py-2 rounded-lg transition-colors shadow-sm flex items-center gap-2"
+                                                                        >
+                                                                            {payingDebt ? 'Procesando...' : 'Confirmar Pago'}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                         </div>
                                     ) : (
                                         <p className="text-sm font-bold text-slate-400 italic">No tiene membresía registrada.</p>
@@ -235,6 +386,36 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
                                 )}
                             </div>
                         </div>
+
+                        {/* Payment History Full Width */}
+                        {fullMember?.payments && fullMember.payments.length > 0 && (
+                            <div className="mt-8 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 p-8 rounded-[2rem] space-y-4">
+                                <div className="flex items-center gap-2 text-slate-400 dark:text-gray-600 text-[10px] font-black uppercase tracking-widest mb-4">
+                                    <CreditCard size={14} />
+                                    <span>Historial de Pagos</span>
+                                </div>
+                                <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+                                    {fullMember.payments.map((payment: any) => (
+                                        <div key={payment.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-100 dark:border-white/5 shadow-sm gap-4">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <div className="text-sm font-black text-gym-primary uppercase">S/ {Number(payment.amount).toFixed(2)}</div>
+                                                    <div className="text-[9px] font-bold text-slate-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                                        {payment.method === 'CASH' ? 'EFECTIVO' : payment.method === 'CARD' ? 'TARJETA' : payment.method === 'YAPE' ? 'YAPE' : payment.method === 'PLIN' ? 'PLIN' : payment.method === 'TRANSFER' ? 'TRANSFERENCIA' : payment.method || 'PAGO'}
+                                                    </div>
+                                                </div>
+                                                <div className="text-[10px] font-bold text-gray-500 uppercase leading-relaxed">
+                                                    {payment.notes || payment.description || 'Pago de membresía'}
+                                                </div>
+                                            </div>
+                                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left sm:text-right shrink-0">
+                                                {format(new Date(payment.date), "dd MMM yyyy, h:mm a", { locale: es })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="px-6 sm:px-10 py-6 sm:py-8 border-t border-gray-100 dark:border-white/5 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 bg-white dark:bg-slate-900 shrink-0 transition-colors duration-300">
@@ -475,41 +656,91 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
                                             <div className="w-8 h-px bg-gym-primary/30" />
                                             MEMBRESÍA Y PAGOS
                                         </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-widest">
-                                                    {member ? 'RENOVAR / REASIGNAR PLAN' : 'PLAN INICIAL *'}
-                                                </label>
-                                                <select
-                                                    name="planId"
-                                                    value={formData.planId}
-                                                    onChange={handleChange}
-                                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-black text-xs uppercase tracking-tight appearance-none cursor-pointer"
-                                                >
-                                                    <option value="" className="dark:bg-slate-900">-- {member ? 'SIN CAMBIOS' : 'SELECCIONAR PLAN'} --</option>
-                                                    {plans.map(plan => (
-                                                        <option key={plan.id} value={plan.id} className="dark:bg-slate-900">
-                                                            {plan.name} - S/ {plan.price} ({plan.durationDays} DÍAS)
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                        {member && member.memberships?.[0] && new Date(member.memberships[0].endDate) >= new Date() ? (
+                                            <div className="bg-amber-50 dark:bg-amber-500/10 border-2 border-amber-200 dark:border-amber-500/20 p-6 rounded-2xl flex items-center gap-4 mb-6">
+                                                <AlertCircle className="text-amber-500 shrink-0" size={24} />
+                                                <div>
+                                                    <h4 className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1">MEMBRESÍA VIGENTE</h4>
+                                                    <p className="text-sm font-bold text-amber-700/70 dark:text-amber-400/70">
+                                                        El socio ya tiene un plan activo. No es posible asignar uno nuevo hasta que el actual expire.
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-widest">MÉTODO DE PAGO</label>
-                                                <select
-                                                    name="paymentMethod"
-                                                    value={formData.paymentMethod}
-                                                    onChange={handleChange}
-                                                    className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-black text-xs uppercase tracking-tight appearance-none cursor-pointer"
-                                                >
-                                                    <option value="CASH" className="dark:bg-slate-900">EFECTIVO</option>
-                                                    <option value="CARD" className="dark:bg-slate-900">TARJETA (DÉBITO/CRÉDITO)</option>
-                                                    <option value="YAPE" className="dark:bg-slate-900">YAPE</option>
-                                                    <option value="PLIN" className="dark:bg-slate-900">PLIN</option>
-                                                    <option value="TRANSFER" className="dark:bg-slate-900">TRANSFERENCIA BANCARIA</option>
-                                                </select>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-6">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-widest">
+                                                        {member ? 'RENOVAR / REASIGNAR PLAN' : 'PLAN INICIAL *'}
+                                                    </label>
+                                                    <select
+                                                        name="planId"
+                                                        value={formData.planId}
+                                                        onChange={handleChange}
+                                                        className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-black text-xs uppercase tracking-tight appearance-none cursor-pointer"
+                                                    >
+                                                        <option value="" className="dark:bg-slate-900">-- {member ? 'SIN CAMBIOS' : 'SELECCIONAR PLAN'} --</option>
+                                                        {plans.map(plan => (
+                                                            <option key={plan.id} value={plan.id} className="dark:bg-slate-900">
+                                                                {plan.name} - S/ {plan.price} ({plan.durationDays} DÍAS)
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-widest">MÉTODO DE PAGO</label>
+                                                    <select
+                                                        name="paymentMethod"
+                                                        value={formData.paymentMethod}
+                                                        onChange={handleChange}
+                                                        className="w-full bg-gray-50 dark:bg-white/5 border-2 border-transparent rounded-2xl px-5 py-3.5 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-white/10 focus:border-gym-primary/30 transition-all font-black text-xs uppercase tracking-tight appearance-none cursor-pointer"
+                                                    >
+                                                        <option value="CASH" className="dark:bg-slate-900">EFECTIVO</option>
+                                                        <option value="CARD" className="dark:bg-slate-900">TARJETA (DÉBITO/CRÉDITO)</option>
+                                                        <option value="YAPE" className="dark:bg-slate-900">YAPE</option>
+                                                        <option value="PLIN" className="dark:bg-slate-900">PLIN</option>
+                                                        <option value="TRANSFER" className="dark:bg-slate-900">TRANSFERENCIA BANCARIA</option>
+                                                    </select>
+                                                </div>
+
+                                                {formData.planId && (
+                                                    <div className="col-span-full space-y-4 bg-gym-primary/5 p-6 rounded-2xl border-2 border-gym-primary/10">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-black text-gym-primary uppercase tracking-widest">MONTO A PAGAR (S/)</label>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    name="amountPaid"
+                                                                    value={formData.amountPaid}
+                                                                    onChange={handleChange}
+                                                                    className="w-full bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl px-5 py-3 text-gym-primary focus:border-gym-primary/30 transition-all font-black text-lg shadow-sm"
+                                                                    placeholder="0.00"
+                                                                />
+                                                                <p className="text-[9px] font-bold text-gym-primary/60 uppercase">Puedes ingresar un pago parcial</p>
+                                                            </div>
+                                                            <div className="flex flex-col justify-center">
+                                                                <div className="text-[10px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-widest mb-1">DIFERENCIA / DEUDA PENDIENTE</div>
+                                                                {(() => {
+                                                                    const plan = plans.find(p => p.id === parseInt(formData.planId));
+                                                                    if (!plan) return null;
+                                                                    const diff = parseFloat(plan.price) - (parseFloat(formData.amountPaid) || 0);
+                                                                    return (
+                                                                        <div className={cn(
+                                                                            "text-2xl font-black uppercase tracking-tighter",
+                                                                            diff > 0 ? "text-red-500" : diff < 0 ? "text-amber-500" : "text-green-500"
+                                                                        )}>
+                                                                            S/ {diff > 0 ? diff.toFixed(2) : "0.00"}
+                                                                        </div>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="col-span-full space-y-2">
+                                        )}
+
+                                        <div className="grid grid-cols-1 gap-y-6">
                                                 <label className="text-[10px] font-black text-slate-400 dark:text-gray-600 uppercase tracking-widest">NOTAS ADICIONALES</label>
                                                 <textarea
                                                     name="notes"
@@ -519,7 +750,6 @@ const MemberModal: React.FC<MemberModalProps> = ({ isOpen, onClose, onSuccess, m
                                                     placeholder="Información relevante sobre el socio..."
                                                 />
                                             </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>

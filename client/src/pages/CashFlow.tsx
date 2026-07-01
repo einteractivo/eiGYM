@@ -96,6 +96,7 @@ const CashFlow: React.FC = () => {
             setInitialAmount('');
             setNotes('');
             fetchData();
+            window.dispatchEvent(new Event('cashFlowUpdated'));
         } catch {
             alert('Error al abrir la caja');
         }
@@ -112,6 +113,7 @@ const CashFlow: React.FC = () => {
             setFinalAmount('');
             setNotes('');
             fetchData();
+            window.dispatchEvent(new Event('cashFlowUpdated'));
         } catch {
             alert('Error al cerrar la caja');
         }

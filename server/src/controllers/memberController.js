@@ -75,7 +75,7 @@ exports.createMember = async (req, res) => {
         if (!req.user.gymId) {
             return res.status(400).json({ error: 'Usuario no pertenece a un gimnasio válido.' });
         }
-        const { firstName, lastName, dni, phone, email, address, fingerprintId, photoUrl, qrCode, birthday, planId, paymentMethod, notes } = req.body;
+        const { firstName, lastName, dni, phone, email, address, fingerprintId, photoUrl, qrCode, birthday, planId, paymentMethod, notes, amountPaid } = req.body;
 
         const existingMember = await prisma.member.findFirst({ where: { dni, gymId: req.user.gymId } });
         if (existingMember) return res.status(400).json({ message: 'DNI ya registrado' });
@@ -134,7 +134,7 @@ exports.createMember = async (req, res) => {
                         data: {
                             memberId: member.id,
                             membershipId: membership.id,
-                            amount: plan.price,
+                            amount: amountPaid !== undefined ? Number(amountPaid) : plan.price,
                             method: paymentMethod || 'CASH',
                             type: 'MEMBERSHIP',
                             notes: `Pago inicial membresía: ${plan.name}`,
@@ -156,7 +156,7 @@ exports.createMember = async (req, res) => {
 
 exports.updateMember = async (req, res) => {
     try {
-        const { firstName, lastName, dni, phone, email, address, fingerprintId, photoUrl, qrCode, birthday, planId, paymentMethod, notes } = req.body;
+        const { firstName, lastName, dni, phone, email, address, fingerprintId, photoUrl, qrCode, birthday, planId, paymentMethod, notes, amountPaid } = req.body;
 
         const data = {
             firstName,
@@ -186,6 +186,18 @@ exports.updateMember = async (req, res) => {
             });
 
             if (planId) {
+                const activeMembership = await tx.membership.findFirst({
+                    where: {
+                        memberId: parseInt(req.params.id),
+                        status: 'ACTIVE',
+                        endDate: { gte: new Date() }
+                    }
+                });
+
+                if (activeMembership) {
+                    throw new Error('El socio ya tiene una membresía activa vigente.');
+                }
+
                 const plan = await tx.plan.findFirst({
                     where: { id: parseInt(planId), gymId: req.user.gymId }
                 });
@@ -210,7 +222,7 @@ exports.updateMember = async (req, res) => {
                         data: {
                             memberId: member.id,
                             membershipId: membership.id,
-                            amount: plan.price,
+                            amount: amountPaid !== undefined ? Number(amountPaid) : plan.price,
                             method: paymentMethod || 'CASH',
                             type: 'MEMBERSHIP',
                             notes: `Renovación/Asignación membresía: ${plan.name}`,

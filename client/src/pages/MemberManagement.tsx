@@ -10,7 +10,8 @@ import {
     MessageCircle,
     Filter,
     Send,
-    Upload
+    Upload,
+    AlertCircle
 } from 'lucide-react';
 import api from '../services/api';
 import { cn } from '../lib/utils';
@@ -52,6 +53,9 @@ const MemberManagement: React.FC = () => {
     const [plans, setPlans] = useState<any[]>([]);
     const [selectedPlanFilter, setSelectedPlanFilter] = useState<string>('all');
     const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
+    
+    // Import Modal State
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [showChurnRiskOnly, setShowChurnRiskOnly] = useState(false);
     const [churnRiskMembers, setChurnRiskMembers] = useState<any[]>([]);
@@ -137,6 +141,7 @@ const MemberManagement: React.FC = () => {
         if (!file) return;
 
         setIsImporting(true);
+        setIsImportModalOpen(false); // Close the tutorial modal
         const toastId = toast.loading('Leyendo archivo...');
 
         try {
@@ -338,12 +343,12 @@ const MemberManagement: React.FC = () => {
                     </button>
 
                     <button
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => setIsImportModalOpen(true)}
                         disabled={isImporting}
                         className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-gray-300 font-black px-6 py-4 rounded-[1.25rem] flex items-center justify-center gap-3 transition-all shadow-sm uppercase tracking-widest text-xs disabled:opacity-50"
                     >
                         <Upload size={18} strokeWidth={3} />
-                        <span>{isImporting ? 'Importando...' : 'Importar'}</span>
+                        <span>{isImporting ? 'Importando...' : 'Importar CSV/Excel'}</span>
                     </button>
                     <input 
                         type="file" 
@@ -693,6 +698,77 @@ const MemberManagement: React.FC = () => {
                 onSuccess={handleSuccess}
                 member={selectedMember}
             />
+
+            {/* Modal de Tutorial de Importación */}
+            {isImportModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div 
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setIsImportModalOpen(false)}
+                    />
+                    <div className="relative bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 border border-gray-100 dark:border-white/10">
+                        <div className="p-8">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-12 h-12 bg-gym-primary/10 rounded-2xl flex items-center justify-center">
+                                    <Upload className="text-gym-primary" size={24} strokeWidth={2.5} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase italic tracking-tight">Importar Socios</h2>
+                                    <p className="text-sm font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">Tutorial para Excel/CSV</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 mb-8 text-sm text-slate-700 dark:text-gray-300 leading-relaxed">
+                                <p>Para importar tus socios correctamente, asegúrate de que tu archivo de Excel (.xlsx, .xls) o CSV tenga al menos la columna <strong>DNI</strong>. El sistema es inteligente y detectará las siguientes columnas automáticamente (sin importar mayúsculas):</p>
+                                
+                                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-gray-100 dark:border-white/5 space-y-3">
+                                    <div className="flex gap-2">
+                                        <span className="font-bold w-24">Nombre:</span>
+                                        <span className="text-slate-500">"nombre", "first"</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <span className="font-bold w-24">Apellido:</span>
+                                        <span className="text-slate-500">"apellido", "last"</span>
+                                    </div>
+                                    <div className="flex gap-2 text-gym-primary">
+                                        <span className="font-bold w-24">DNI:</span>
+                                        <span className="text-gym-primary/70">"dni", "documento", "rut", "cedula" (Requerido)</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <span className="font-bold w-24">Email:</span>
+                                        <span className="text-slate-500">"correo", "email"</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <span className="font-bold w-24">Teléfono:</span>
+                                        <span className="text-slate-500">"telefono", "celular", "phone"</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-500 rounded-xl flex gap-3 text-xs font-medium">
+                                    <AlertCircle size={16} className="shrink-0" />
+                                    <p>Nota: Los socios sin un documento de identidad (DNI) válido serán ignorados en la importación. Los datos duplicados se actualizarán si el DNI coincide con uno existente.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-8">
+                                <button
+                                    onClick={() => setIsImportModalOpen(false)}
+                                    className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors uppercase text-xs"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="px-6 py-3 bg-gym-primary hover:bg-gym-primary/90 text-white rounded-xl font-bold transition-colors shadow-lg shadow-gym-primary/20 flex items-center gap-2 uppercase text-xs"
+                                >
+                                    <Upload size={16} strokeWidth={3} />
+                                    Seleccionar Archivo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <WhatsAppSendModal
                 isOpen={isWhatsAppModalOpen}

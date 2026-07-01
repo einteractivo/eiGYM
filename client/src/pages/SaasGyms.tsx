@@ -205,6 +205,17 @@ const SaasGyms = () => {
         }
     };
 
+    const handleDeleteRegistration = async (id: number) => {
+        if (!window.confirm('¿Eliminar esta solicitud permanentemente?')) return;
+        try {
+            await api.delete(`/saas/registrations/${id}`);
+            toast.success('Solicitud eliminada');
+            fetchRegistrations();
+        } catch {
+            toast.error('Error al eliminar solicitud');
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -691,12 +702,21 @@ const SaasGyms = () => {
                                             </>
                                         )}
                                         {reg.status !== 'PENDING' && (
-                                            <button 
-                                                onClick={() => updateRegistrationStatus(reg.id, 'PENDING')}
-                                                className="text-xs font-bold text-slate-400 hover:text-gym-primary italic underline"
-                                            >
-                                                Mover a Pendientes
-                                            </button>
+                                            <>
+                                                <button 
+                                                    onClick={() => updateRegistrationStatus(reg.id, 'PENDING')}
+                                                    className="text-xs font-bold text-slate-400 hover:text-gym-primary italic underline"
+                                                >
+                                                    Mover a Pendientes
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteRegistration(reg.id)}
+                                                    className="p-2 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-500 transition-all"
+                                                    title="Eliminar solicitud"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>

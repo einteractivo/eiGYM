@@ -17,6 +17,7 @@ router.delete('/users/:id', saasController.deleteGymUser);
 // Registrations
 router.get('/registrations', saasController.getRegistrations);
 router.put('/registrations/:id/status', saasController.updateRegistrationStatus);
+router.delete('/registrations/:id', saasController.deleteRegistration);
 
 // SaaS Users (Global)
 router.get('/saas-users', saasController.getSaasUsers);

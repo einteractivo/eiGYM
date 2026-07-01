@@ -155,7 +155,7 @@ const AttendanceTracking: React.FC = () => {
 
                     // In normal mode, clear after 5s. In Kiosk, the effect handles it.
                     if (!isKioskMode) {
-                        setTimeout(() => setLastRes(null), 5000);
+                        setTimeout(() => setLastRes(null), 2000);
                     }
                 } catch (submitErr: any) {
                     setError(submitErr.response?.data?.message || 'Error al registrar asistencia');
@@ -217,7 +217,7 @@ const AttendanceTracking: React.FC = () => {
             setIdentifier('');
             fetchAttendances();
 
-            setTimeout(() => setLastRes(null), 5000);
+            setTimeout(() => setLastRes(null), 2000);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al registrar asistencia');
         } finally {
@@ -250,7 +250,7 @@ const AttendanceTracking: React.FC = () => {
             });
 
             fetchTrainerHistory();
-            setTimeout(() => setLastRes(null), 5000);
+            setTimeout(() => setLastRes(null), 2000);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al registrar asistencia de entrenador');
         } finally {
@@ -568,11 +568,12 @@ const AttendanceTracking: React.FC = () => {
                     </form>
                 </div>
 
-                {/* Result Message Container */}
-                <div className="min-h-[160px]">
-                    {lastRes && (
+                {/* Result Message Modal */}
+                {lastRes && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setLastRes(null)} />
                         <div className={cn(
-                            "p-10 rounded-[3rem] border shadow-2xl animate-in fade-in slide-in-from-bottom-10 duration-700",
+                            "relative w-full max-w-lg p-10 rounded-[3rem] border shadow-2xl animate-in zoom-in-95 duration-300",
                             lastRes.allowed
                                 ? "bg-green-50 dark:bg-green-500/10 border-green-100 dark:border-green-500/20 text-green-700 dark:text-green-400 shadow-green-100/50 dark:shadow-none"
                                 : "bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20 text-red-700 dark:text-red-400 shadow-red-100/50 dark:shadow-none"
@@ -586,7 +587,7 @@ const AttendanceTracking: React.FC = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-3xl font-black italic tracking-tighter uppercase leading-none">{lastRes.allowed ? '¡BIENVENIDO!' : 'ACCESO DENEGADO'}</h3>
-                                    <p className="text-xl font-black uppercase mt-2 leading-none text-slate-900 dark:text-white">{lastRes.member.name}</p>
+                                    <p className="text-xl font-black uppercase mt-2 leading-none text-slate-900 dark:text-white">{lastRes.member?.name}</p>
                                 </div>
                             </div>
                             <p className="mt-6 text-[11px] font-black uppercase tracking-[0.2em] opacity-60 flex items-center gap-2">
@@ -594,8 +595,8 @@ const AttendanceTracking: React.FC = () => {
                                 {lastRes.message}
                             </p>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* Recent History Section */}

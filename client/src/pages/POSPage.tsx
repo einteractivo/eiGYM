@@ -159,21 +159,13 @@ const POSPage: React.FC = () => {
     };
 
     return (
-        <div className="h-[calc(100vh-140px)] flex flex-col gap-8 animate-in fade-in duration-500 pb-8 transition-colors duration-300">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-sm transition-colors duration-300">
-                <div>
-                    
-                    <p className="text-gray-500 dark:text-gray-400 text-[10px] mt-1 font-bold uppercase tracking-widest">Venta rápida de suplementos y artículos</p>
+        <div className="flex flex-col gap-8 animate-in fade-in duration-500 pb-8 transition-colors duration-300 min-h-[calc(100vh-140px)] lg:h-[calc(100vh-140px)]">
+            {success && (
+                <div className="absolute top-4 right-4 z-50 flex items-center gap-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-4 py-2 rounded-2xl border border-green-100 dark:border-green-500/20 animate-in zoom-in-95 font-black text-xs uppercase tracking-widest shadow-xl">
+                    <CheckCircle2 size={16} />
+                    <span>Venta Exitosa</span>
                 </div>
-                <div className="flex items-center gap-3">
-                    {success && (
-                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-4 py-2 rounded-2xl border border-green-100 dark:border-green-500/20 animate-in zoom-in-95 font-black text-xs uppercase tracking-widest">
-                            <CheckCircle2 size={16} />
-                            <span>Venta Exitosa</span>
-                        </div>
-                    )}
-                </div>
-            </div>
+            )}
 
             <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
                 <div className="flex-1 flex flex-col gap-8 min-h-0">
@@ -346,31 +338,33 @@ const POSPage: React.FC = () => {
                         </div>
 
                         {/* Checkout Footer */}
-                        <div className="p-8 bg-slate-900 border-t border-slate-800 shrink-0 space-y-8 shadow-[0_-20px_40px_rgba(0,0,0,0.1)] relative z-10 transition-colors duration-300">
-                            <div className="flex justify-between items-end border-b border-white/5 pb-4">
-                                <div>
-                                    <span className="text-[10px] font-black text-slate-500 dark:text-gray-400 uppercase tracking-[0.3em] block mb-1">Total a Pagar</span>
-                                    <span className="text-4xl font-black text-white leading-none tracking-tighter italic">
-                                        <span className="text-gym-primary mr-2">S/</span>
-                                        {calculateTotal().toFixed(2)}
-                                    </span>
+                        <div className="p-4 bg-slate-900 border-t border-slate-800 shrink-0 shadow-[0_-20px_40px_rgba(0,0,0,0.1)] relative z-10 transition-colors duration-300">
+                            <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
+                                <div className="w-full lg:w-auto flex justify-between lg:justify-start items-center gap-6">
+                                    <div>
+                                        <span className="text-[8px] font-black text-slate-500 dark:text-gray-400 uppercase tracking-[0.3em] block mb-0.5">Total a Pagar</span>
+                                        <span className="text-2xl font-black text-white leading-none tracking-tighter italic">
+                                            <span className="text-gym-primary mr-1">S/</span>
+                                            {calculateTotal().toFixed(2)}
+                                        </span>
+                                    </div>
+                                    <div className="text-right lg:text-left">
+                                        <span className="text-[8px] font-black text-slate-500 dark:text-gray-400 uppercase tracking-[0.3em] block mb-0.5">Impuestos</span>
+                                        <span className="text-xs font-bold text-white/50 tracking-tighter italic leading-none">{applyIgv ? "IGV (+18%)" : "Sin IGV"}</span>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <span className="text-[10px] font-black text-slate-500 dark:text-gray-400 uppercase tracking-[0.3em] block mb-1">Impuestos</span>
-                                    <span className="text-sm font-bold text-white/50 tracking-tighter italic leading-none">{applyIgv ? "IGV (+18%)" : "Sin IGV"}</span>
-                                </div>
+                                <button
+                                    onClick={() => {
+                                        setIsCheckoutModalOpen(true);
+                                        setAmountReceived(0);
+                                    }}
+                                    disabled={cart.length === 0}
+                                    className="w-full lg:w-auto bg-gym-primary hover:bg-gym-primary/90 disabled:opacity-20 disabled:grayscale disabled:cursor-not-allowed text-white font-black px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-gym-primary/20 text-sm tracking-widest group active:scale-[0.98] shrink-0"
+                                >
+                                    <ShoppingCart size={16} className="group-hover:animate-bounce" />
+                                    <span>PAGAR</span>
+                                </button>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setIsCheckoutModalOpen(true);
-                                    setAmountReceived(0);
-                                }}
-                                disabled={cart.length === 0}
-                                className="w-full bg-gym-primary hover:bg-gym-primary/90 disabled:opacity-20 disabled:grayscale disabled:cursor-not-allowed text-white font-black py-6 rounded-[1.5rem] flex items-center justify-center gap-4 transition-all shadow-2xl shadow-gym-primary/20 text-xl tracking-widest group active:scale-[0.98]"
-                            >
-                                <ShoppingCart size={24} className="group-hover:animate-bounce" />
-                                <span>PROCESAR PAGO</span>
-                            </button>
                         </div>
                     </div>
                 </div>
